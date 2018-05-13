@@ -1,0 +1,22 @@
+﻿<Window x:Class="WiinUSoft.Windows.RemoveAllWiimotesWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        xmlns:local="clr-namespace:WiinUSoft.Windows"
+        mc:Ignorable="d"
+        Title="" Height="55.086" Width="256" ResizeMode="NoResize" WindowStartupLocation="CenterOwner" ShowInTaskbar="False" WindowStyle="None" Loaded="Window_Loaded">
+    <Grid>
+        <Label
+            Content="Removing all Wiimotes..."
+            FontWeight="Bold"
+            />
+
+        <ProgressBar Margin="10,27,10,10" IsIndeterminate="True"
+            
+            
+            />
+
+        <!--<Button x:Name="buttonCancel" Content="Cancel" HorizontalAlignment="Right" VerticalAlignment="Bottom" Margin="0,0,6,5" Width="62" Click="buttonCancel_Click"/>-->
+    </Grid>
+</Window>

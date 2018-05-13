@@ -1,0 +1,92 @@
+﻿<Window
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:tb="http://www.hardcodet.net/taskbar"
+        xmlns:local="clr-namespace:WiinUSoft" x:Class="WiinUSoft.MainWindow"
+        Title="WiitarThing" Height="480" Width="574" Loaded="Window_Loaded" Icon="/WiitarThing;component/Images/GHWT_Wii_Guitar.png" Background="{DynamicResource BrushSocialBlue}" StateChanged="Window_StateChanged" MinWidth="624" MinHeight="480" Closing="Window_Closing">
+    <Grid>
+        <Grid.Resources>
+            <local:ShowWindowCommand x:Key="ShowWindow" />
+        </Grid.Resources>
+        <Label Content="Built upon WiinUSoft by Justin Keys. Guitar support added by Meowmaritus." HorizontalAlignment="Left" VerticalAlignment="Bottom" Padding="2" FontSize="12" Margin="8,0,0,3" Width="412"/>
+        <tb:TaskbarIcon x:Name="trayIcon" 
+                        IconSource="/WiitarThing;component/GHWT_Wii_Guitar.ico"
+                        ToolTipText="WiinUSoft" 
+                        Visibility="Hidden"
+                        DoubleClickCommand="{StaticResource ShowWindow}">
+            <tb:TaskbarIcon.ContextMenu>
+                <ContextMenu Background="{DynamicResource BrushAntemWhite}">
+                    <MenuItem Header="Show" Click="MenuItem_Show_Click" FontWeight="Bold" />
+                    <MenuItem Header="Refresh" Click="MenuItem_Refresh_Click" />
+                    <MenuItem Header="Exit" Click="MenuItem_Exit_Click" />
+                </ContextMenu>
+            </tb:TaskbarIcon.ContextMenu>
+        </tb:TaskbarIcon>
+        <Border CornerRadius="0" BorderBrush="{DynamicResource BrushJohnTheRevelator}" Background="{DynamicResource BrushAntemWhite}" BorderThickness="2" Margin="8,81,0,64" HorizontalAlignment="Left" Width="292">
+            <ScrollViewer Grid.Row="1" VerticalScrollBarVisibility="Auto">
+                <StackPanel x:Name="groupAvailable" HorizontalAlignment="Left" Width="280" Margin="4,4,0,0"/>
+            </ScrollViewer>
+        </Border>
+        <Border CornerRadius="0" BorderBrush="{DynamicResource BrushJohnTheRevelator}" Background="{DynamicResource BrushAntemWhite}" BorderThickness="2" Margin="308,84,0,64" HorizontalAlignment="Left" Width="292">
+            <ScrollViewer Grid.Row="1" VerticalScrollBarVisibility="Auto">
+                <StackPanel x:Name="groupXinput" HorizontalAlignment="Left" Margin="4,4,0,0" Width="280" Background="{DynamicResource BrushAntemWhite}"/>
+            </ScrollViewer>
+        </Border>
+        <Border CornerRadius="6" BorderBrush="{DynamicResource BrushJohnTheRevelator}" Background="{DynamicResource BrushAntemWhite}" BorderThickness="2" Margin="608,42,0,8" HorizontalAlignment="Left" Width="292" Grid.ColumnSpan="2" Visibility="Hidden">
+            <ScrollViewer Grid.Row="1" VerticalScrollBarVisibility="Auto">
+                <StackPanel HorizontalAlignment="Left" Margin="4,4,0,0" Width="280"/>
+            </ScrollViewer>
+        </Border>
+        <Label Content="Detected (But not Connected) Devices:" HorizontalAlignment="Left" Margin="10,42,0,0" VerticalAlignment="Top" FontWeight="Bold" Width="230" Height="18" Padding="5,0"/>
+        <Label Content="If your device doesn't show up, try restarting the app." HorizontalAlignment="Left" Margin="10,60,0,0" VerticalAlignment="Top" Width="290" Height="16" FontSize="10" Padding="5,0"/>
+        <Button x:Name="buttonTestInputs" HorizontalAlignment="Left" Margin="308,11,0,0" VerticalAlignment="Top" Width="292" Height="42" FontSize="12" Padding="5,0" FontWeight="Bold" Click="buttonTestInputs_Click"
+                Background="{DynamicResource ButonFillBrush1}"
+                BorderBrush="{DynamicResource BrushAntemBlue}"
+                BorderThickness="2"
+                >
+            <TextBlock>
+                <Run Text="Click here to open controller test menu."/>
+                <LineBreak/>
+                <Run Text="Double-click" FontWeight="Normal" FontSize="10"/>
+                <Run Text="&quot;Controller (XBOX 360 For Windows)&quot;" FontWeight="Regular" FontStyle="Italic" FontSize="10"/>
+                <Run Text="to test." FontWeight="Normal" FontSize="10"/>
+            </TextBlock>
+        </Button>
+        <Label Content="Devices Connected as Xbox 360 Controllers:" HorizontalAlignment="Left" Margin="308,53,0,0" VerticalAlignment="Top" FontWeight="Bold" />
+        <!--<Label Content="Connected as VJoy Devices:" HorizontalAlignment="Left" Margin="637,10,0,0" VerticalAlignment="Top" Visibility="Visible" FontWeight="Bold" />-->
+        <Button x:Name="btnSync" HorizontalAlignment="Left" Margin="10,10,0,0" VerticalAlignment="Top" Width="44" Height="24" BorderBrush="{DynamicResource BrushAntemBlue}" BorderThickness="2" FontWeight="Black" FontSize="12" ToolTip="Sync" Background="{DynamicResource ButonFillBrush1}" Click="btnSync_Click" Foreground="Red" Padding="0.6,1,1,1" >
+            SYNC
+        </Button>
+        <Button x:Name="btnRefresh" HorizontalAlignment="Left" Margin="8,0,0,35" VerticalAlignment="Bottom" Width="292" Height="24" BorderBrush="{DynamicResource BrushAntemBlue}" BorderThickness="2" FontSize="10" FontWeight="SemiBold" ToolTip="Refresh Connected Device List" Background="{DynamicResource ButonFillBrush1}" Click="btnRefresh_Click">
+            Refresh Connected Device List
+        </Button>
+        <Button x:Name="btnRemoveAllWiimotes" HorizontalAlignment="Left" Margin="59,10,0,0" VerticalAlignment="Top" Width="155" Height="24" BorderBrush="{DynamicResource BrushAntemBlue}" BorderThickness="2" FontSize="12" FontWeight="Bold" ToolTip="Refresh" Background="{DynamicResource ButonFillBrush1}" Click="btnRemoveAllWiimotes_Click" >
+            REMOVE ALL WIIMOTES
+        </Button>
+        <Button x:Name="btnDetatchAllXInput" HorizontalAlignment="Left" Margin="308,0,0,35" VerticalAlignment="Bottom" Width="292" Height="24" BorderBrush="{DynamicResource BrushAntemBlue}" BorderThickness="2" FontSize="10" FontWeight="SemiBold" Click="btnDetatchAllXInput_Click" ToolTip="Detatch All" Background="{DynamicResource ButonFillBrush1}">
+            Disconnect All Devices
+        </Button>
+        <Button x:Name="btnSettings" HorizontalAlignment="Left" Margin="219,10,0,0" VerticalAlignment="Top" Width="81" Height="24" BorderBrush="{DynamicResource BrushAntemBlue}" 
+                BorderThickness="2" FontSize="9" FontWeight="Normal" ToolTip="Advanced Configuration (don't mess with this unless you know what you're doing)." 
+                Background="{DynamicResource ButonFillBrush1}" Click="btnSettings_Click" VerticalContentAlignment="Center" Padding="0,2,0,1">
+            <Button.ContextMenu>
+                <ContextMenu>
+                    <MenuItem x:Name="menu_AutoStart" Header="Auto Startup" Click="menu_AutoStart_Click"/>
+                    <MenuItem x:Name="menu_StartMinimized" Header="Start Minimized" Click="menu_StartMinimized_Click"/>
+                    <MenuItem x:Name="menu_AutoRefresh" Header="Use Auto Refresh" Click="menu_AutoRefresh_Click"/>
+                    <MenuItem x:Name="menu_NoSharing" Header="Greedy Mode" Click="menu_NoSharing_Click"/>
+                    <MenuItem x:Name="menu_MsBluetooth" Header="Microsoft Bluetooth" Click="menu_MsBluetooth_Click"/>
+                    <MenuItem x:Name="menu_SetDefaultCalibration" Visibility="Collapsed"
+               Header="Set Default Calibration" Click="menu_SetDefaultCalibration_Click"/>
+                    <MenuItem x:Name="menu_version" Header="version 2.0" IsEnabled="False"/>
+                </ContextMenu>
+            </Button.ContextMenu>
+            Advanced Config
+        </Button>
+        <Label x:Name="labelDebugBuild" Content="(DEBUG BUILD)" HorizontalAlignment="Right" VerticalAlignment="Bottom" Width="157" FontWeight="Black" FontSize="20" Foreground="Red" Padding="0" Height="32" Margin="0,0,16,0">
+            <!--<Label.Effect>
+                <DropShadowEffect ShadowDepth="3" BlurRadius="3"/>
+            </Label.Effect>-->
+        </Label>
+    </Grid>
+</Window>
