@@ -83,6 +83,10 @@ namespace WiinUSoft
 #else
             labelDebugBuild.Visibility = Visibility.Hidden;
 #endif
+
+#if LOW_BANDWIDTH
+            Title += " - LIGHT VERSION";
+#endif
         }
 
         public void HideWindow()

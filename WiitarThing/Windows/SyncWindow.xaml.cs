@@ -85,6 +85,8 @@ namespace WiinUSoft.Windows
 
         public static void RemoveAllWiimotes()
         {
+            WiitarDebug.Log("FUNC BEGIN - RemoveAllWiimotes");
+
             var radioParams = new NativeImports.BLUETOOTH_FIND_RADIO_PARAMS();
             Guid HidServiceClass = Guid.Parse(NativeImports.HID_GUID);
             List<IntPtr> btRadios = new List<IntPtr>();
@@ -122,7 +124,9 @@ namespace WiinUSoft.Windows
                     searchParams.Initialize();
 
                     // Access radio information
+                    WiitarDebug.Log("BEF - BluetoothGetRadioInfo");
                     uint getInfoError = NativeImports.BluetoothGetRadioInfo(radio, ref radioInfo);
+                    WiitarDebug.Log("AFT - BluetoothGetRadioInfo");
 
                     if (getInfoError == 0)
                     {
@@ -136,7 +140,9 @@ namespace WiinUSoft.Windows
                         searchParams.cTimeoutMultiplier = 2;
 
                         // Search for a device
+                        WiitarDebug.Log("BEF - BluetoothFindFirstDevice");
                         found = NativeImports.BluetoothFindFirstDevice(ref searchParams, ref deviceInfo);
+                        WiitarDebug.Log("AFT - BluetoothFindFirstDevice");
 
                         // Success
                         if (found != IntPtr.Zero)
@@ -156,7 +162,9 @@ namespace WiinUSoft.Windows
 
                                     if (/*!ConnectedDeviceAddresses.Contains(deviceInfo.Address) && */(deviceInfo.fRemembered || deviceInfo.fConnected))
                                     {
+                                        WiitarDebug.Log("BEF - BluetoothRemoveDevice");
                                         errForget = NativeImports.BluetoothRemoveDevice(ref deviceInfo.Address);
+                                        WiitarDebug.Log("AFT - BluetoothRemoveDevice");
                                         success = errForget == 0;
                                     }
 
@@ -173,11 +181,17 @@ namespace WiinUSoft.Windows
                     }
                 }
             }
+
+            WiitarDebug.Log("FUNC END - RemoveAllWiimotes");
         }
 
         public void Sync()
         {
+            WiitarDebug.Log("FUNC BEGIN - Sync");
+
+            WiitarDebug.Log("BEF - BLUETOOTH_FIND_RADIO_PARAMS");
             var radioParams = new NativeImports.BLUETOOTH_FIND_RADIO_PARAMS();
+            WiitarDebug.Log("AFT - BLUETOOTH_FIND_RADIO_PARAMS");
             Guid HidServiceClass = Guid.Parse(NativeImports.HID_GUID);
             List<IntPtr> btRadios = new List<IntPtr>();
             IntPtr foundRadio;
@@ -186,7 +200,9 @@ namespace WiinUSoft.Windows
             radioParams.Initialize();
 
             // Get first BT Radio
+            WiitarDebug.Log("BEF - BluetoothGetRadioInfo");
             foundResult = NativeImports.BluetoothFindFirstRadio(ref radioParams, out foundRadio);
+            WiitarDebug.Log("AFT - BluetoothGetRadioInfo");
             bool more = foundResult != IntPtr.Zero;
 
             do
@@ -197,7 +213,9 @@ namespace WiinUSoft.Windows
                 }
 
                 // Find more
+                WiitarDebug.Log("BEF - BluetoothFindNextRadio");
                 more = NativeImports.BluetoothFindNextRadio(ref radioParams, out foundRadio);
+                WiitarDebug.Log("AFT - BluetoothFindNextRadio");
             } while (more);
 
             if (btRadios.Count > 0)
@@ -210,16 +228,27 @@ namespace WiinUSoft.Windows
                     foreach (var radio in btRadios)
                     {
                         IntPtr found;
+
+                        WiitarDebug.Log("BEF - BLUETOOTH_RADIO_INFO");
                         var radioInfo = new NativeImports.BLUETOOTH_RADIO_INFO();
+                        WiitarDebug.Log("AFT - BLUETOOTH_RADIO_INFO");
+
+                        WiitarDebug.Log("BEF - BLUETOOTH_DEVICE_INFO");
                         var deviceInfo = new NativeImports.BLUETOOTH_DEVICE_INFO();
+                        WiitarDebug.Log("AFT - BLUETOOTH_DEVICE_INFO");
+
+                        WiitarDebug.Log("BEF - BLUETOOTH_DEVICE_SEARCH_PARAMS");
                         var searchParams = new NativeImports.BLUETOOTH_DEVICE_SEARCH_PARAMS();
+                        WiitarDebug.Log("AFT - BLUETOOTH_DEVICE_SEARCH_PARAMS");
 
                         radioInfo.Initialize();
                         deviceInfo.Initialize();
                         searchParams.Initialize();
 
                         // Access radio information
+                        WiitarDebug.Log("BEF - BluetoothGetRadioInfo");
                         uint getInfoError = NativeImports.BluetoothGetRadioInfo(radio, ref radioInfo);
+                        WiitarDebug.Log("AFT - BluetoothGetRadioInfo");
 
                         // Success
                         if (getInfoError == 0)
@@ -234,7 +263,9 @@ namespace WiinUSoft.Windows
                             searchParams.cTimeoutMultiplier = 2;
 
                             // Search for a device
+                            WiitarDebug.Log("BEF - BluetoothFindFirstDevice");
                             found = NativeImports.BluetoothFindFirstDevice(ref searchParams, ref deviceInfo);
+                            WiitarDebug.Log("AFT - BluetoothFindFirstDevice");
 
                             // Success
                             if (found != IntPtr.Zero)
@@ -330,7 +361,9 @@ namespace WiinUSoft.Windows
                                         // Authenticate
                                         if (success)
                                         {
+                                            WiitarDebug.Log("BEF - BluetoothAuthenticateDevice [SYNC]");
                                             errAuth = NativeImports.BluetoothAuthenticateDevice(IntPtr.Zero, radio, ref deviceInfo, password.ToString(), 6);
+                                            WiitarDebug.Log("AFT - BluetoothAuthenticateDevice [SYNC]");
                                             //errAuth = NativeImports.BluetoothAuthenticateDeviceEx(IntPtr.Zero, radio, ref deviceInfo, null, NativeImports.AUTHENTICATION_REQUIREMENTS.MITMProtectionNotRequired);
                                             success = errAuth == 0;
                                         }
@@ -352,7 +385,10 @@ namespace WiinUSoft.Windows
                                                     password.Append((char)wiimoteBytes[i]);
                                             }
 
+                                            WiitarDebug.Log("BEF - BluetoothAuthenticateDevice [1+2]");
                                             errAuth = NativeImports.BluetoothAuthenticateDevice(IntPtr.Zero, radio, ref deviceInfo, password.ToString(), 6);
+                                            WiitarDebug.Log("AFT - BluetoothAuthenticateDevice [1+2]");
+
                                             //errAuth = NativeImports.BluetoothAuthenticateDeviceEx(IntPtr.Zero, radio, ref deviceInfo, null, NativeImports.AUTHENTICATION_REQUIREMENTS.MITMProtectionNotRequired);
                                             success = errAuth == 0;
                                         }
@@ -360,14 +396,18 @@ namespace WiinUSoft.Windows
                                         // Install PC Service
                                         if (success)
                                         {
+                                            WiitarDebug.Log("BEF - BluetoothEnumerateInstalledServices");
                                             errService = NativeImports.BluetoothEnumerateInstalledServices(radio, ref deviceInfo, ref pcService, guids);
+                                            WiitarDebug.Log("AFT - BluetoothEnumerateInstalledServices");
                                             success = errService == 0;
                                         }
 
                                         // Set to HID service
                                         if (success)
                                         {
+                                            WiitarDebug.Log("BEF - BluetoothSetServiceState");
                                             errActivate = NativeImports.BluetoothSetServiceState(radio, ref deviceInfo, ref HidServiceClass, 0x01);
+                                            WiitarDebug.Log("AFT - BluetoothSetServiceState");
                                             success = errActivate == 0;
                                         }
 
@@ -417,6 +457,8 @@ namespace WiinUSoft.Windows
                                         Prompt("(Found \"" + deviceInfo.szName + "\", but it is not a Wiimote)", isBold: false, isItalic: false, isSmall: true, isDebug: true);
                                     }
 #endif
+
+                                    WiitarDebug.Log("About to try BluetoothFindNextDevice...");
                                 } while (NativeImports.BluetoothFindNextDevice(found, ref deviceInfo));
                             }
                         }
@@ -431,7 +473,9 @@ namespace WiinUSoft.Windows
                 // Close each Radio
                 foreach (var openRadio in btRadios)
                 {
+                    WiitarDebug.Log("BEF - CloseHandle");
                     NativeImports.CloseHandle(openRadio);
+                    WiitarDebug.Log("AFT - CloseHandle");
                 }
             }
             else
@@ -445,10 +489,14 @@ namespace WiinUSoft.Windows
 
             // Close this window
             Dispatcher.BeginInvoke((Action)(() => Close()));
+
+            WiitarDebug.Log("FUNC END - Sync");
         }
 
         private void Prompt(string text, bool isBold = false, bool isItalic = false, bool isSmall = false, bool isDebug = false)
         {
+            WiitarDebug.Log("SYNC WINDOW OUTPUT: \n\n" + text + "\n\n");
+
             Dispatcher.BeginInvoke(new Action(() =>
             {
                 var newInline = new System.Windows.Documents.Run(text);

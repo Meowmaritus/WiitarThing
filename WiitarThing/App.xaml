@@ -15,6 +15,11 @@
             <GradientStop Color="#FF7CA3CA" Offset="0.5"/>
             <GradientStop Color="#FFADCCEB" Offset="1"/>
         </LinearGradientBrush>
+        <LinearGradientBrush x:Key="ButonFillBrush1_Red" EndPoint="0,1" StartPoint="0,0">
+            <GradientStop Color="#FFF8EEDC" Offset="0"/>
+            <GradientStop Color="#FFCAA37C" Offset="0.5"/>
+            <GradientStop Color="#FFEBCCAD" Offset="1"/>
+        </LinearGradientBrush>
         <SolidColorBrush x:Key="BrushAntemWhite" Color="#FFF3F6FB"/>
         <SolidColorBrush x:Key="BrushSocialBlue" Color="#FFE7F3FF"/>
         <SolidColorBrush x:Key="BrushEyeing" Color="#FFDCEEF8"/>

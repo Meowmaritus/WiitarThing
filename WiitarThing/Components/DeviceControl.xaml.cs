@@ -61,6 +61,17 @@ namespace WiinUSoft
             get { return device; }
             set
             {
+                if (device != null)
+                {
+                    device.ExtensionChange -= device_ExtensionChange;
+                    device.StateUpdate -= device_StateChange;
+                    device.LowBattery -= device_LowBattery;
+
+#if DEBUG
+                    Device.StateUpdate -= Debug_Device_StateUpdate;
+#endif
+                }
+
                 device = value;
 
                 if (device != null)
@@ -68,6 +79,10 @@ namespace WiinUSoft
                     device.ExtensionChange += device_ExtensionChange;
                     device.StateUpdate += device_StateChange;
                     device.LowBattery += device_LowBattery;
+
+#if DEBUG
+                    Device.StateUpdate += Debug_Device_StateUpdate;
+#endif
                 }
             }
         }
@@ -128,6 +143,36 @@ namespace WiinUSoft
 
             Device.Disconnected += device_Disconnected;
         }
+
+#if DEBUG
+        private Windows.DebugDataWindow DebugDataWindowInstance = null;
+
+        private void Debug_Device_StateUpdate(object sender, NintrollerStateEventArgs e)
+        {
+            if (e.state.DebugViewActive)
+            {
+                e.state.DebugViewActive = false;
+                DebugViewActivate();
+            }
+        }
+
+        private void DebugViewActivate()
+        {
+            if (DebugDataWindowInstance == null || !DebugDataWindowInstance.IsVisible)
+            {
+                Application.Current.Dispatcher.BeginInvoke(new Action(() =>
+                {
+                    DebugDataWindowInstance = new Windows.DebugDataWindow();
+                    DebugDataWindowInstance.nintroller = Device;
+                    DebugDataWindowInstance.RegisterNintrollerUpdate();
+                    DebugDataWindowInstance.Show();
+
+                }), System.Windows.Threading.DispatcherPriority.ContextIdle);
+
+
+            }
+        }
+#endif
 
         public void RefreshState()
         {
@@ -193,6 +238,7 @@ namespace WiinUSoft
                     btnDetatch.IsEnabled    = false;
                    // btnConfig.Visibility    = Visibility.Hidden;
                     btnDetatch.Visibility   = Visibility.Hidden;
+                    btnDebugView.Visibility = Visibility.Hidden;
                     break;
 
                 case DeviceState.Discovered:
@@ -204,6 +250,7 @@ namespace WiinUSoft
                     btnDetatch.IsEnabled    = false;
                     //btnConfig.Visibility    = Visibility.Hidden;
                     btnDetatch.Visibility   = Visibility.Hidden;
+                    btnDebugView.Visibility = Visibility.Hidden;
                     break;
 
                 case DeviceState.Connected_XInput:
@@ -215,6 +262,12 @@ namespace WiinUSoft
                     btnDetatch.IsEnabled    = true;
                     //btnConfig.Visibility    = Visibility.Visible;
                     btnDetatch.Visibility   = Visibility.Visible;
+
+#if DEBUG
+                    btnDebugView.Visibility = Visibility.Visible;
+#else
+                    btnDebugView.Visibility = Visibility.Hidden;
+#endif
 
                     var xHolder = new Holders.XInputHolder(device.Type);
                     LoadProfile(properties.profile, xHolder);
@@ -290,7 +343,7 @@ namespace WiinUSoft
                 // TODO: Balance Board Reading (not for 1st release)
                 // TODO: Musical Extension readings (not for 1st release)
                 case ControllerType.ProController:
-                    #region Pro Controller
+#region Pro Controller
                     ProController pro = (ProController)e.state;
 
                     holder.SetValue(Inputs.ProController.A, pro.A);
@@ -323,7 +376,7 @@ namespace WiinUSoft
                     holder.SetValue(Inputs.ProController.RLEFT,  pro.RJoy.X < 0 ? pro.RJoy.X * -1 : 0f);
                     holder.SetValue(Inputs.ProController.RUP,    pro.RJoy.Y > 0 ? pro.RJoy.Y : 0f);
                     holder.SetValue(Inputs.ProController.RDOWN,  pro.RJoy.Y < 0 ? pro.RJoy.Y * -1 : 0f);
-                    #endregion
+#endregion
                     break;
 
                 case ControllerType.Wiimote:
@@ -333,7 +386,7 @@ namespace WiinUSoft
 
                 case ControllerType.Nunchuk:
                 case ControllerType.NunchukB:
-                    #region Nunchuk
+#region Nunchuk
                     Nunchuk nun = (Nunchuk)e.state;
 
                     SetWiimoteInputs(nun.wiimote);
@@ -355,11 +408,11 @@ namespace WiinUSoft
                     holder.SetValue(Inputs.Nunchuk.ACC_SHAKE_X, nun.accelerometer.X > 1.15f);
                     holder.SetValue(Inputs.Nunchuk.ACC_SHAKE_Y, nun.accelerometer.Y > 1.15f);
                     holder.SetValue(Inputs.Nunchuk.ACC_SHAKE_Z, nun.accelerometer.Z > 1.15f);
-                    #endregion
+#endregion
                     break;
 
                 case ControllerType.ClassicController:
-                    #region Classic Controller
+#region Classic Controller
                     ClassicController cc = (ClassicController)e.state;
 
                     SetWiimoteInputs(cc.wiimote);
@@ -397,11 +450,11 @@ namespace WiinUSoft
                     holder.SetValue(Inputs.ClassicController.RLEFT, cc.RJoy.X < 0 ? cc.RJoy.X * -1 : 0f);
                     holder.SetValue(Inputs.ClassicController.RUP, cc.RJoy.Y > 0 ? cc.RJoy.Y : 0f);
                     holder.SetValue(Inputs.ClassicController.RDOWN, cc.RJoy.Y < 0 ? cc.RJoy.Y * -1 : 0f);
-                    #endregion
+#endregion
                     break;
 
                 case ControllerType.ClassicControllerPro:
-                    #region Classic Controller Pro
+#region Classic Controller Pro
                     ClassicControllerPro ccp = (ClassicControllerPro)e.state;
 
                     SetWiimoteInputs(ccp.wiimote);
@@ -434,11 +487,11 @@ namespace WiinUSoft
                     holder.SetValue(Inputs.ClassicControllerPro.RLEFT, ccp.RJoy.X < 0 ? ccp.RJoy.X * -1 : 0f);
                     holder.SetValue(Inputs.ClassicControllerPro.RUP, ccp.RJoy.Y > 0 ? ccp.RJoy.Y : 0f);
                     holder.SetValue(Inputs.ClassicControllerPro.RDOWN, ccp.RJoy.Y < 0 ? ccp.RJoy.Y * -1 : 0f);
-                    #endregion
+#endregion
                     break;
 
                 case ControllerType.Guitar:
-                    #region Wii Guitar
+#region Wii Guitar
                     WiiGuitar wgt = (WiiGuitar)e.state;
 
                     //SetWiimoteInputs(wgt.wiimote);
@@ -462,8 +515,7 @@ namespace WiinUSoft
 
                     holder.SetValue(Inputs.WiiGuitar.START, wgt.Start);
                     holder.SetValue(Inputs.WiiGuitar.SELECT, wgt.Select);
-                    holder.SetValue(Inputs.WiiGuitar.HOME, wgt.Home);
-                    #endregion
+#endregion
                     break;
             }
             
@@ -753,7 +805,7 @@ namespace WiinUSoft
             }
         }
 
-        #region UI Events
+#region UI Events
         private void btnXinput_Click(object sender, RoutedEventArgs e)
         {
             if (btnXinput.ContextMenu != null)
@@ -944,6 +996,13 @@ namespace WiinUSoft
                 UserPrefs.SavePrefs();
             }
         }
-        #endregion
+#endregion
+
+        private void btnDebugView_Click(object sender, RoutedEventArgs e)
+        {
+#if DEBUG
+            DebugViewActivate();
+#endif
+        }
     }
 }

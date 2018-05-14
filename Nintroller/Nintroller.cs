@@ -767,9 +767,16 @@ namespace NintrollerLib
                                 Log("Controller type: " + newType.ToString());
                                 // TODO: New: Check parsing after applying a report type (Pro is working, CC is not)
                                 InputReport applyReport = InputReport.BtnsOnly;
-                                bool continuiousReporting = true;
 
-                                switch(newType)
+#if LOW_BANDWIDTH
+                                bool continuousReporting = false;
+#else
+                                bool continuousReporting = true;
+#endif
+
+
+
+                                switch (newType)
                                 {
                                     case ControllerType.Wiimote:
                                         _state = new Wiimote();
@@ -876,14 +883,18 @@ namespace NintrollerLib
 
                                         if (_calibrations.ClassicProCalibration.CalibrationEmpty)
                                         {
-                                            _state.SetCalibration(Calibrations.CalibrationPreset.Default);
+                                            _state.SetCalibration(Calibrations.CalibrationPreset.None);
                                         }
                                         else
                                         {
                                             _state.SetCalibration(_calibrations.ClassicProCalibration);
                                         }
-
+#if LOW_BANDWIDTH
+                                        applyReport = InputReport.BtnsExt;
+#else
                                         applyReport = InputReport.BtnsAccExt;
+#endif
+
                                         break;
 
                                     case ControllerType.MotionPlus:
@@ -927,7 +938,7 @@ namespace NintrollerLib
                                 ExtensionChange(this, new NintrollerExtensionEventArgs(_currentType));
                                 
                                 // set Report
-                                ApplyReportingType(applyReport, continuiousReporting);
+                                ApplyReportingType(applyReport, continuousReporting);
                             }
                             break;
 
@@ -935,11 +946,11 @@ namespace NintrollerLib
                             Log("Unrecognized Read Memory report");
                             break;
                     }
-                    #endregion
+#endregion
                     break;
 
                 case InputReport.Acknowledge:
-                    #region Parse Acknowledgement
+#region Parse Acknowledgement
                     Log("Output Acknowledged");
 
                     if (report[4] == 0x03)
@@ -952,7 +963,7 @@ namespace NintrollerLib
                     switch (_ackType)
                     {
                         case AcknowledgementType.NA:
-                            #region Default Acknowledgement
+#region Default Acknowledgement
                             Log("Acknowledgement Report");
                             Log(BitConverter.ToString(report));
                             // Core buttons can be parsed here
@@ -1000,11 +1011,11 @@ namespace NintrollerLib
                             //    // and set report
                             //    SetReportType(InputReport.BtnsAccIR);
                             //}
-                            #endregion
+#endregion
                             break;
 
                         case AcknowledgementType.IR_Step1:
-                            #region IR Step 1
+#region IR Step 1
                             byte[] sensitivityBlock1 = null;
                             
                             switch (_irSensitivity)
@@ -1045,11 +1056,11 @@ namespace NintrollerLib
 
                             _ackType = AcknowledgementType.IR_Step2;
                             WriteToMemory(Constants.REGISTER_IR_SENSITIVITY_1, sensitivityBlock1);
-                            #endregion
+#endregion
                             break;
 
                         case AcknowledgementType.IR_Step2:
-                            #region IR Step 2
+#region IR Step 2
                             byte[] sensitivityBlock2 = null;
                             
                             switch (_irSensitivity)
@@ -1090,7 +1101,7 @@ namespace NintrollerLib
 
                             _ackType = AcknowledgementType.IR_Step3;
                             WriteToMemory(Constants.REGISTER_IR_SENSITIVITY_2, sensitivityBlock2);
-                            #endregion
+#endregion
                             break;
 
                         case AcknowledgementType.IR_Step3:
@@ -1104,7 +1115,7 @@ namespace NintrollerLib
                             break;
 
                         case AcknowledgementType.IR_Step5:
-                            #region Final IR Step
+#region Final IR Step
                             Log("IR Camera Enabled");
                             _ackType = AcknowledgementType.NA;
 
@@ -1127,7 +1138,7 @@ namespace NintrollerLib
                                     SetReportType(InputReport.BtnsIRExt);
                                     break;
                             }
-                            #endregion
+#endregion
                             break;
 
                         default:
@@ -1136,11 +1147,11 @@ namespace NintrollerLib
                             Log(BitConverter.ToString(report));
                             break;
                     }
-                    #endregion
+#endregion
                     break;
-                #endregion
+#endregion
 
-                #region Data Reports
+#region Data Reports
                 case InputReport.BtnsOnly:
                 case InputReport.BtnsAcc:
                 case InputReport.BtnsExt:
@@ -1171,7 +1182,7 @@ namespace NintrollerLib
                         }
                     }
                     break;
-                #endregion
+#endregion
 
                 default:
                     Log("Unexpected Report type: " + input.ToString("x"));
@@ -1179,9 +1190,9 @@ namespace NintrollerLib
             }
         }
 
-        #endregion
+#endregion
 
-        #region General
+#region General
 
         internal static float Normalize(int raw, int min, int center, int max)
         {
@@ -1398,9 +1409,9 @@ namespace NintrollerLib
             _connected = false;
         }
 
-        #endregion
+#endregion
 
-        #region Calibration
+#region Calibration
 
         /// <summary>
         /// Sets the device's calibrations based on a preset.
@@ -1496,10 +1507,10 @@ namespace NintrollerLib
             }
         }
 
-        #endregion
+#endregion
     }
 
-    #region New Event Args
+#region New Event Args
 
     /// <summary>
     /// Class for controller state update.
@@ -1593,6 +1604,6 @@ namespace NintrollerLib
         }
     }
 
-    #endregion
+#endregion
 
 }

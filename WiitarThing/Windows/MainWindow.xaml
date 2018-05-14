@@ -83,10 +83,15 @@
             </Button.ContextMenu>
             Advanced Config
         </Button>
-        <Label x:Name="labelDebugBuild" Content="(DEBUG BUILD)" HorizontalAlignment="Right" VerticalAlignment="Bottom" Width="157" FontWeight="Black" FontSize="20" Foreground="Red" Padding="0" Height="32" Margin="0,0,16,0">
+        <Label x:Name="labelDebugBuild" HorizontalAlignment="Left" VerticalAlignment="Bottom" Width="162" FontWeight="Black" FontSize="14" Foreground="Red" Padding="0" Height="32" Margin="438,0,0,0">
             <!--<Label.Effect>
-                <DropShadowEffect ShadowDepth="3" BlurRadius="3"/>
+                <DropShadowEffect ShadowDepth="1.5" BlurRadius="1"/>
             </Label.Effect>-->
+            <TextBlock>
+                <Run Text="(DEBUG BUILD)"/>
+                <LineBreak/>
+                <Run Text="Press HOME to view Wiimote data." FontSize="9"/>
+            </TextBlock>
         </Label>
     </Grid>
 </Window>

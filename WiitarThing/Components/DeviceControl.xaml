@@ -32,6 +32,16 @@
             </Image.ContextMenu>
         </Image>
         <Label x:Name="labelName" Content="Unknown Device" HorizontalAlignment="Left" Margin="100,8,0,0" VerticalAlignment="Top" Width="160" FontSize="14" Height="26"/>
+        <Button x:Name="btnDebugView" HorizontalAlignment="Left" Margin="81,46,0,0" VerticalAlignment="Top" Width="24" Height="24" BorderBrush="#FFEA0000" BorderThickness="2" FontSize="11" ToolTip="Debug View" Click="btnDebugView_Click">
+            <Button.Background>
+                <LinearGradientBrush EndPoint="0,1" StartPoint="0,0">
+                    <GradientStop Color="#FFFFBEBE" Offset="0"/>
+                    <GradientStop Color="#FFFF5C5C" Offset="0.5"/>
+                    <GradientStop Color="#FFFF2828" Offset="1"/>
+                </LinearGradientBrush>
+            </Button.Background>
+            <Image Source="/WiitarThing;component/Images/Properties-icon.png"/>
+        </Button>
         <Button x:Name="btnIdentify" HorizontalAlignment="Left" Margin="110,39,0,0" VerticalAlignment="Top" Width="32" Height="32" BorderBrush="{DynamicResource BrushAntemBlue}" BorderThickness="2" FontSize="11" ToolTip="Identify" Background="{DynamicResource ButonFillBrush1}" Click="btnIdentify_Click">
             <Image Source="../Images/IDicon3.png"/>
         </Button>

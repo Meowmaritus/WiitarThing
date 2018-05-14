@@ -1,0 +1,28 @@
+﻿<Window x:Class="WiinUSoft.Windows.DebugDataWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        xmlns:local="clr-namespace:WiinUSoft.Windows"
+        mc:Ignorable="d"
+        Title="Debug - Wiimote Data" Height="300" Width="564.333" MinWidth="457" MinHeight="300" Icon="../Images/WiinUSoft_Icon32.png" Background="{DynamicResource BrushSocialBlue}" Closing="Window_Closing" Loaded="Window_Loaded">
+    <Grid>
+        <TextBlock x:Name="info" Margin="10,10,10,0" TextWrapping="Wrap" VerticalAlignment="Top" Height="20">
+            <Run Text="Wiimote data packets are spit out below."/>
+            <!--<LineBreak/>
+            <Run FontStyle="Italic"  FontSize="10" Text="You can copy and paste the output from the box below when asking for help!" />
+            <LineBreak/>
+            <Run FontStyle="Italic" FontWeight="Black" FontSize="10" Text="Make sure this window is closed when you play the game; it causes input lag while scanning!" />
+            <LineBreak/>
+            <LineBreak/>
+            <Run Text="Output:"/>-->
+        </TextBlock>
+        <RichTextBox x:Name="promptBoxContainer" Margin="10,30,10,44" Background="{DynamicResource BrushAntemWhite}" ScrollViewer.VerticalScrollBarVisibility="Visible" FontSize="14" FontFamily="Courier New">
+            <FlowDocument x:Name="prompt" PagePadding="2">
+                
+            </FlowDocument>
+        </RichTextBox>
+        <Button x:Name="cancelBtn" Content="Cancel Scan" Margin="0,0,10,10" Background="{DynamicResource ButonFillBrush1}" BorderBrush="{DynamicResource BrushAntemBlue}" FontWeight="Bold" Foreground="{DynamicResource {x:Static SystemColors.MenuTextBrushKey}}" HorizontalAlignment="Right" Width="84" Height="26" VerticalAlignment="Bottom" Click="cancelBtn_Click"/>
+
+    </Grid>
+</Window>

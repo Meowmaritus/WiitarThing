@@ -10,6 +10,21 @@ namespace NintrollerLib
 {
     public struct Wiimote : INintrollerState
     {
+#if DEBUG
+        private bool _debugViewActive;
+        public bool DebugViewActive
+        {
+            get
+            {
+                return _debugViewActive;
+            }
+            set
+            {
+                _debugViewActive = value;
+            }
+        }
+#endif
+
         public CoreButtons buttons;
         public Accelerometer accelerometer;
         public IR irSensor;
@@ -21,6 +36,10 @@ namespace NintrollerLib
             accelerometer = new Accelerometer();
             irSensor = new IR();
             //extension = null;
+
+#if DEBUG
+            _debugViewActive = false;
+#endif
 
             Update(rawData);
         }
@@ -294,6 +313,21 @@ namespace NintrollerLib
 
     public struct Nunchuk : INintrollerState
     {
+#if DEBUG
+        private bool _debugViewActive;
+        public bool DebugViewActive
+        {
+            get
+            {
+                return _debugViewActive;
+            }
+            set
+            {
+                _debugViewActive = value;
+            }
+        }
+#endif
+
         public Wiimote wiimote;
         public Accelerometer accelerometer;
         public Joystick joystick;
@@ -312,6 +346,11 @@ namespace NintrollerLib
             joystick = new Joystick();
 
             C = Z = false;
+
+#if DEBUG
+            _debugViewActive = false;
+#endif
+
             Update(rawData);
         }
 
@@ -577,6 +616,21 @@ namespace NintrollerLib
 
     public struct ClassicController : INintrollerState
     {
+#if DEBUG
+        private bool _debugViewActive;
+        public bool DebugViewActive
+        {
+            get
+            {
+                return _debugViewActive;
+            }
+            set
+            {
+                _debugViewActive = value;
+            }
+        }
+#endif
+
         public Wiimote wiimote;
         public Joystick LJoy, RJoy;
         public Trigger L, R;
@@ -935,6 +989,21 @@ namespace NintrollerLib
 
     public struct ClassicControllerPro : INintrollerState
     {
+#if DEBUG
+        private bool _debugViewActive;
+        public bool DebugViewActive
+        {
+            get
+            {
+                return _debugViewActive;
+            }
+            set
+            {
+                _debugViewActive = value;
+            }
+        }
+#endif
+
         public Wiimote wiimote;
         public Joystick LJoy, RJoy;
         public bool A, B, X, Y;
@@ -1230,6 +1299,21 @@ namespace NintrollerLib
 
     public struct ProController : INintrollerState
     {
+#if DEBUG
+        private bool _debugViewActive;
+        public bool DebugViewActive
+        {
+            get
+            {
+                return _debugViewActive;
+            }
+            set
+            {
+                _debugViewActive = value;
+            }
+        }
+#endif
+
         public Joystick LJoy, RJoy;
         public bool A, B, X, Y;
         public bool Up, Down, Left, Right;
@@ -1525,6 +1609,20 @@ namespace NintrollerLib
 
     public struct BalanceBoard : INintrollerState
     {
+#if DEBUG
+        private bool _debugViewActive;
+        public bool DebugViewActive
+        {
+            get
+            {
+                return _debugViewActive;
+            }
+            set
+            {
+                _debugViewActive = value;
+            }
+        }
+#endif
 
         public void Update(byte[] data)
         {
@@ -1595,6 +1693,21 @@ namespace NintrollerLib
 
     public struct WiimotePlus : INintrollerState
     {
+#if DEBUG
+        private bool _debugViewActive;
+        public bool DebugViewActive
+        {
+            get
+            {
+                return _debugViewActive;
+            }
+            set
+            {
+                _debugViewActive = value;
+            }
+        }
+#endif
+
         Wiimote wiimote;
         //gyro
 
@@ -1665,15 +1778,32 @@ namespace NintrollerLib
         {
             return GetEnumerator();
         }
+
+       
     }
 
     public struct WiiGuitar : INintrollerState
     {
+#if DEBUG
+        private bool _debugViewActive;
+        public bool DebugViewActive
+        {
+            get
+            {
+                return _debugViewActive;
+            }
+            set
+            {
+                _debugViewActive = value;
+            }
+        }
+#endif
+
         public Wiimote wiimote;
-        private Joystick Joy;
+        public Joystick Joy;
         public bool G, R, Y, B, O;
         public bool Up, Down, Left, Right;
-        public bool Plus, Minus, Home;
+        public bool Plus, Minus;
 
         public bool IsGH3;
         public bool IsGH3SetYet { get; private set; }
@@ -1685,6 +1815,10 @@ namespace NintrollerLib
 
         public float TiltHigh;
         public float TiltLow;
+
+#if DEBUG
+        public byte[] DebugLastData;
+#endif
 
 #if DEBUG
         private bool DebugButton_Dump;
@@ -1710,6 +1844,12 @@ namespace NintrollerLib
 
             CALIB_Tilt_Neutral = 0;
             CALIB_Tilt_TiltedREEEE = (float)(Math.PI / 2);
+
+#if DEBUG
+            DebugLastData = new byte[] { 0 };
+#endif
+
+            Joy.Calibrate(Calibrations.Defaults.WiiGuitarDefault.Joy);
         }
 
         public bool Start
@@ -1760,6 +1900,8 @@ namespace NintrollerLib
         private const byte WGT_TOUCH_STRIP_BlueToOrange5 = 0x1E;
         private const byte WGT_TOUCH_STRIP_Orange = 0x1F;
 
+        private const float WGT_JOY_DIGITAL_THRESH = 0.5f;
+
         //private const byte WGT_WHAMMY_MIN = 0x10;
         //private const byte WGT_WHAMMY_MAX = 0x1B;
 
@@ -1770,6 +1912,17 @@ namespace NintrollerLib
 
         public void Update(byte[] data)
         {
+#if DEBUG
+            //DebugLastData = new byte[data.Length];
+
+            //for (int i = 0; i < data.Length; i++)
+            //{
+            //    DebugLastData[i] = data[i];
+            //}
+
+            DebugLastData = data;
+#endif
+
             int offset = 0;
             switch ((InputReport)data[0])
             {
@@ -1826,9 +1979,122 @@ namespace NintrollerLib
                 //Left = (data[offset + 5] & 0x02) == 0;
                 //Right = (data[offset + 4] & 0x80) == 0;
 
-                // Joysticks
-                Joy.rawX = (byte)(data[offset] & 0x3F);
-                Joy.rawY = (byte)(data[offset + 1] & 0x03F);
+                //Up = false;
+                //Down = false;
+                Left = false;
+                Right = false;
+
+                if (data[offset] != 0 || data[offset + 1] != 0)
+                {
+                    // Joysticks
+                    Joy.rawX = (byte)(data[offset] & 0x3F);
+                    Joy.rawY = (byte)(data[offset + 1] & 0x03F);
+
+                    if (Joy.rawX > Joy.maxX)
+                    {
+                        Joy.maxX = Joy.rawX;
+                    }
+                    else if (Joy.rawX < Joy.minX)
+                    {
+                        Joy.minX = Joy.rawX;
+                    }
+
+                    if (Joy.rawY > Joy.maxY)
+                    {
+                        Joy.maxY = Joy.rawY;
+                    }
+                    else if (Joy.rawY < Joy.minY)
+                    {
+                        Joy.minY = Joy.rawY;
+                    }
+
+                    Joy.Normalize();
+
+                    bool isJoyPressed = (((Joy.X * Joy.X) + (Joy.Y * Joy.Y)) >= (WGT_JOY_DIGITAL_THRESH * WGT_JOY_DIGITAL_THRESH));
+                    double joyDirection = (int)((Math.Atan2(Joy.Y, Joy.X) + (Math.PI / 2)) / (Math.PI / 8));
+                    int joyDirStep = (int)(Math.Abs(joyDirection));
+
+                    if (isJoyPressed)
+                    {
+                        if (joyDirection < 0)
+                        {
+                            switch (joyDirStep)
+                            {
+                                case 0: //N
+                                    Down = true;
+                                    break;
+                                case 1: //NE
+                                case 2: //NE
+                                    Down = true;
+                                    Left = true;
+                                    break;
+                                case 3: //E
+                                case 4: //E
+                                    Left = true;
+                                    break;
+                                case 5: //SE
+                                case 6: //SE
+                                    Left = true;
+                                    Up = true;
+                                    break;
+                                case 7: //S
+                                case 8: //S
+                                    Up = true;
+                                    break;
+                                case 9: //SW
+                                case 10: //SW
+                                    Up = true;
+                                    Right = true;
+                                    break;
+                                case 11: //W
+                                case 12: //W
+                                    Right = true;
+                                    break;
+
+                            }
+                        }
+                        else
+                        {
+                            switch (joyDirStep)
+                            {
+                                case 0: //N
+                                    Down = true;
+                                    break;
+                                case 1: //NW
+                                case 2: //NW
+                                    Down = true;
+                                    Right = true;
+                                    break;
+                                case 3: //W
+                                case 4: //W
+                                    Right = true;
+                                    break;
+                                case 5: //SW
+                                case 6: //SW
+                                    Right = true;
+                                    Up = true;
+                                    break;
+                                case 7: //S
+                                case 8: //S
+                                    Up = true;
+                                    break;
+                                case 9: //SE
+                                case 10: //SE
+                                    Up = true;
+                                    Left = true;
+                                    break;
+                                case 11: //E
+                                case 12: //E
+                                    Left = true;
+                                    break;
+                            }
+                        }
+
+
+                    }
+                }
+
+                
 
                 if ((!IsGH3) && CALIB_Enable_TouchStrip)
                 {
@@ -1899,16 +2165,16 @@ namespace NintrollerLib
                     oldTouchStripValue = data[offset + 2];
                 }
 
-                // Normalize
-                Joy.Normalize();
+                //// Normalize
+                //Joy.Normalize();
 
-                if (Joy.Y > 0.5f)
-                    Up = true;
-                else if (Joy.Y < -0.5f)
-                    Down = true;
+                //if (Joy.Y > 0.7f)
+                //    Up = true;
+                //else if (Joy.Y < -0.7f)
+                //    Down = true;
 
-                Left = Joy.X < -0.5f;
-                Right = Joy.X > 0.5f;
+                //Left = Joy.X < -0.7f;
+                //Right = Joy.X > 0.7f;
 
                 byte currentWhammyValue = (byte)(data[offset + 3] & 0x1F);
 
@@ -1931,32 +2197,37 @@ namespace NintrollerLib
                 //Console.Write($"Joy2=[{RJoy.X},{RJoy.Y}]    ");
 
                 //Console.WriteLine();
-                if (wiimote.buttons.Up)
-                {
-                    Left = true;
-                }
-                else if (wiimote.buttons.Down)
-                {
-                    Right = true;
-                }
-
-                if (wiimote.buttons.Right)
-                {
-                    Down = true;
-                }
-                else if (wiimote.buttons.Left)
-                {
-                    Up = true;
-                }
-
-                if (wiimote.buttons.A)
-                {
-                    Select = true;
-                }
+                
 
             }
 
+#if LOW_BANDWIDTH
+
+#else
             wiimote.Update(data);
+
+            if (wiimote.buttons.Up)
+            {
+                Left = true;
+            }
+            else if (wiimote.buttons.Down)
+            {
+                Right = true;
+            }
+
+            if (wiimote.buttons.Right)
+            {
+                Down = true;
+            }
+            else if (wiimote.buttons.Left)
+            {
+                Up = true;
+            }
+
+            if (wiimote.buttons.A)
+            {
+                Select = true;
+            }
 
             if (wiimote.buttons.One)
             {
@@ -1982,13 +2253,11 @@ namespace NintrollerLib
                 CALIB_Tilt_StartingZ = 0;
 
                 CALIB_Tilt_Neutral = 0;// (float)Math.Atan2(Math.Abs(wiimote.accelerometer.Y), Math.Abs(wiimote.accelerometer.X)) * Math.Max(Math.Min(1 - Math.Abs(wiimote.accelerometer.Z - CALIB_Tilt_StartingZ), 1), 0);
-                
 
                 CALIB_Tilt_TiltedREEEE = (float)(CALIB_Tilt_Neutral + Math.PI / 2);
             }
 
             float tiltAngle = (float)Math.Atan2(Math.Abs(wiimote.accelerometer.Y), Math.Abs(wiimote.accelerometer.X)) * Math.Max(Math.Min(1 - Math.Abs(wiimote.accelerometer.Z - CALIB_Tilt_StartingZ), 1), 0);
-
 
 
             if (wiimote.buttons.Two)
@@ -2008,6 +2277,11 @@ namespace NintrollerLib
                 else if (wiimote.buttons.Minus && CALIB_Enable_TouchStrip)
                     CALIB_Enable_TouchStrip = false;
             }
+#endif
+
+
+
+
 
 
 #if DEBUG
@@ -2019,16 +2293,18 @@ namespace NintrollerLib
                     {
                         DebugButton_Dump = true;
 
-                        var sb = new StringBuilder();
+                        //var sb = new StringBuilder();
 
-                        sb.AppendLine("Wii Guitar data packet dump:");
+                        //sb.AppendLine("Wii Guitar data packet dump:");
 
-                        for (int i = 0; i < data.Length; i++)
-                        {
-                            sb.Append(data[i].ToString("X2") + " ");
-                        }
+                        //for (int i = 0; i < data.Length; i++)
+                        //{
+                        //    sb.Append(data[i].ToString("X2") + " ");
+                        //}
 
-                        MessageBox.Show(sb.ToString(), "DEBUG: WII GUITAR DUMP", MessageBoxButtons.OK, MessageBoxIcon.Information);
+                        //MessageBox.Show(sb.ToString(), "DEBUG: WII GUITAR DUMP", MessageBoxButtons.OK, MessageBoxIcon.Information);
+
+                        DebugViewActive = true;
                     }
                 }
                 else
@@ -2051,52 +2327,58 @@ namespace NintrollerLib
         {
             wiimote.SetCalibration(preset);
 
-            switch (preset)
-            {
-                case Calibrations.CalibrationPreset.Default:
-                    //LJoy.Calibrate(Calibrations.Defaults.ClassicControllerProDefault.LJoy);
-                    //RJoy.Calibrate(Calibrations.Defaults.ClassicControllerProDefault.RJoy);
-                    SetCalibration(Calibrations.Defaults.ClassicControllerProDefault);
-                    break;
+            //switch (preset)
+            //{
+            //    case Calibrations.CalibrationPreset.Default:
+            //        //LJoy.Calibrate(Calibrations.Defaults.ClassicControllerProDefault.LJoy);
+            //        //RJoy.Calibrate(Calibrations.Defaults.ClassicControllerProDefault.RJoy);
+            //        SetCalibration(Calibrations.Defaults.ClassicControllerProDefault);
+            //        break;
 
-                case Calibrations.CalibrationPreset.Modest:
-                    SetCalibration(Calibrations.Moderate.ClassicControllerProModest);
-                    break;
+            //    case Calibrations.CalibrationPreset.Modest:
+            //        SetCalibration(Calibrations.Moderate.ClassicControllerProModest);
+            //        break;
 
-                case Calibrations.CalibrationPreset.Extra:
-                    SetCalibration(Calibrations.Extras.ClassicControllerProExtra);
-                    break;
+            //    case Calibrations.CalibrationPreset.Extra:
+            //        SetCalibration(Calibrations.Extras.ClassicControllerProExtra);
+            //        break;
 
-                case Calibrations.CalibrationPreset.Minimum:
-                    SetCalibration(Calibrations.Minimum.ClassicControllerProMinimal);
-                    break;
+            //    case Calibrations.CalibrationPreset.Minimum:
+            //        SetCalibration(Calibrations.Minimum.ClassicControllerProMinimal);
+            //        break;
 
-                case Calibrations.CalibrationPreset.None:
-                    SetCalibration(Calibrations.None.ClassicControllerProRaw);
-                    break;
-            }
+            //    case Calibrations.CalibrationPreset.None:
+            //        SetCalibration(Calibrations.None.ClassicControllerProRaw);
+            //        break;
+            //}
+
+
+
+            Joy.Calibrate(Calibrations.Defaults.WiiGuitarDefault.Joy);
+
+            //SetCalibration(Calibrations.Defaults.ClassicControllerProDefault);
         }
 
         public void SetCalibration(INintrollerState from)
         {
-            if (from.CalibrationEmpty)
-            {
-                // don't apply empty calibrations
-                return;
-            }
+            //if (from.CalibrationEmpty)
+            //{
+            //    // don't apply empty calibrations
+            //    return;
+            //}
 
-            if (from.GetType() == typeof(WiiGuitar))
-            {
-                Joy.Calibrate(((WiiGuitar)from).Joy);
-            }
-            else if (from.GetType() == typeof(ClassicControllerPro))
-            {
-                Joy.Calibrate(((ClassicControllerPro)from).LJoy);
-            }
-            else if (from.GetType() == typeof(Wiimote))
-            {
-                wiimote.SetCalibration(from);
-            }
+            //if (from.GetType() == typeof(WiiGuitar))
+            //{
+            //    Joy.Calibrate(((WiiGuitar)from).Joy);
+            //}
+            //else if (from.GetType() == typeof(ClassicControllerPro))
+            //{
+            //    Joy.Calibrate(((ClassicControllerPro)from).LJoy);
+            //}
+            //else if (from.GetType() == typeof(Wiimote))
+            //{
+            //    wiimote.SetCalibration(from);
+            //}
         }
 
         public void SetCalibration(string calibrationString)
@@ -2190,7 +2472,6 @@ namespace NintrollerLib
 
             yield return new KeyValuePair<string, float>(INPUT_NAMES.WII_GUITAR.START, Start ? 1.0f : 0.0f);
             yield return new KeyValuePair<string, float>(INPUT_NAMES.WII_GUITAR.SELECT, Select ? 1.0f : 0.0f);
-            yield return new KeyValuePair<string, float>(INPUT_NAMES.WII_GUITAR.HOME, Home ? 1.0f : 0.0f);
 
             yield return new KeyValuePair<string, float>(INPUT_NAMES.WII_GUITAR.WHAMMYHIGH, WhammyHigh);
             yield return new KeyValuePair<string, float>(INPUT_NAMES.WII_GUITAR.WHAMMYLOW, WhammyLow);

@@ -603,6 +603,22 @@
                     deadY   = 2
                 }
             };
+
+            public WiiGuitar WiiGuitarDefault = new WiiGuitar()
+            {
+                Joy = new Joystick()
+                {
+                    centerX = 31,
+                    minX = 0x10,
+                    maxX = 0x30,
+                    deadX = 0,
+
+                    centerY = 31,
+                    minY = 0x10,
+                    maxY = 0x30,
+                    deadY = 0
+                }
+            };
         }
 
         /// <summary>

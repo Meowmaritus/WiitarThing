@@ -1,4 +1,5 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
 
 namespace NintrollerLib
 {
@@ -11,6 +12,10 @@ namespace NintrollerLib
         void SetCalibration(string calibrationString);
         string GetCalibrationString();
         bool CalibrationEmpty { get; }
+
+#if DEBUG
+        bool DebugViewActive { get; set; }
+#endif
     }
 
     public interface INintrollerParsable
