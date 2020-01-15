@@ -768,13 +768,13 @@ namespace NintrollerLib
                                 // TODO: New: Check parsing after applying a report type (Pro is working, CC is not)
                                 InputReport applyReport = InputReport.BtnsOnly;
 
-#if LOW_BANDWIDTH
-                                bool continuousReporting = false;
-#else
+//#if LOW_BANDWIDTH
+//                                bool continuousReporting = false;
+//#else
+//                                bool continuousReporting = true;
+//#endif
+
                                 bool continuousReporting = true;
-#endif
-
-
 
                                 switch (newType)
                                 {
