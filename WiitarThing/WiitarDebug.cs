@@ -9,9 +9,19 @@ namespace WiinUSoft
 {
     class WiitarDebug
     {
-        public static void Log(string message)
+        public enum LogLevel
         {
-#if DEBUG
+            TooMuch = 0,
+            Warning = 1,
+            Error = 2,
+        }
+
+        public static void Log(string message, LogLevel level = LogLevel.TooMuch)
+        {
+#if !DEBUG
+            if (level < LogLevel.Error)
+                return;
+#endif
             var utcDate = DateTime.Now.ToUniversalTime();
             string date = $"{utcDate.Hour:D2}:{utcDate.Minute:D2}:{utcDate.Second:D2}.{utcDate.Millisecond:D3}";
             string logFilePath = Frankenpath(new FileInfo(Application.ResourceAssembly.Location).DirectoryName, "WiitarLog.log");
@@ -23,7 +33,7 @@ namespace WiinUSoft
                     logFileWriter.WriteLine($"[{date}] {message}");
                 }
             }
-#endif
+
         }
 
         public static string Frankenpath(params string[] pathParts)
