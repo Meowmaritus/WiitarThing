@@ -37,7 +37,7 @@ namespace WiinUSoft
 
             Exception e = (Exception)args.ExceptionObject;
 
-            WiitarDebug.Log($"ERROR:\n----------------------------------------\n{e.ToString()}\n----------------------------------------");
+            WiitarDebug.Log($"ERROR:\n----------------------------------------\n{e.ToString()}\n----------------------------------------", WiitarDebug.LogLevel.Error);
 
             var box = new ErrorWindow(e);
             box.ShowDialog();
