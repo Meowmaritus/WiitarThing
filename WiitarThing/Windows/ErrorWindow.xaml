@@ -3,8 +3,8 @@
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         Title="Application Error" Height="439" Width="436">
     <Grid>
-        <Label Content="Uh-oh, something went wrong..." HorizontalAlignment="Left" Margin="10,10,0,0" VerticalAlignment="Top"/>
-        <Label x:Name="_errorMessage" Content="Message" Margin="10,41,10,0" VerticalAlignment="Top" IsEnabled="False" Foreground="Black" FontWeight="Bold"/>
+        <Label Content="The application has encountered an unhandled error and crashed." HorizontalAlignment="Left" Margin="10,10,0,0" VerticalAlignment="Top" FontWeight="Bold"/>
+        <Label x:Name="_errorMessage" Content="Error Message:" Margin="10,41,10,0" VerticalAlignment="Top" IsEnabled="False" Foreground="Black" FontWeight="Bold"/>
         <TextBox x:Name="_errorStack" Margin="10,71,7.6,35.6" TextWrapping="Wrap" Text="More Info" VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Auto" ScrollViewer.CanContentScroll="True" IsReadOnly="True" FontStyle="Italic"/>
         <Button x:Name="_dontSendBtn" Content="Close" Margin="0,0,9.6,9.6" HorizontalAlignment="Right" Width="75" Height="21" VerticalAlignment="Bottom" Click="_dontSendBtn_Click"/>
     </Grid>

@@ -33,16 +33,21 @@ namespace WiinUSoft
 
         static void CurrentDomain_UnhandledException(object sender, UnhandledExceptionEventArgs args)
         {
-            MessageBox.Show("WiitarThing is about to crash. Press OK to show the crash message.", "Sorry", MessageBoxButton.OK, MessageBoxImage.Error);
+            //MessageBox.Show("WiitarThing is about to crash. Press OK to show the crash message.", "Sorry", MessageBoxButton.OK, MessageBoxImage.Error);
 
             Exception e = (Exception)args.ExceptionObject;
-            
+
+            WiitarDebug.Log($"ERROR:\n----------------------------------------\n{e.ToString()}\n----------------------------------------");
+
+            var box = new ErrorWindow(e);
+            box.ShowDialog();
+
             SingleInstance<App>.Cleanup();
-            Current.Dispatcher.Invoke(new Action(() => 
-            {
-                var box = new ErrorWindow(e);
-                box.ShowDialog();
-            }));
+            //Current.Dispatcher.Invoke(new Action(() => 
+            //{
+            //    var box = new ErrorWindow(e);
+            //    box.ShowDialog();
+            //}));
         }
 
         public bool SignalExternalCommandLineArgs(IList<string> args)

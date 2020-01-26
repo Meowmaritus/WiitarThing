@@ -28,7 +28,7 @@ namespace WiinUSoft
                 Version nVersion = System.Reflection.Assembly.LoadFrom("Nintroller.dll").GetName().Version;
                 if (nVersion < new Version(2, 5))
                 {
-                    _errorMessage.Content = "Then Nintroller library is out of date.";
+                    _errorMessage.Content = "The Nintroller library is out of date.";
                     _errorStack.Text = "Please try the following:" + Environment.NewLine +
                         Environment.NewLine + "1) Uninstall WiinUSoft" + 
                         Environment.NewLine + "2) Reinstall WiinUSoft using the latest installer" +

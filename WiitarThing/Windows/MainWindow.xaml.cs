@@ -179,11 +179,29 @@ namespace WiinUSoft
                 }
             }
 
-            int target = 0;
-            while (!Holders.XInputHolder.availabe[target] && target < 4)
+            int target = -1;
+
+            for (int i = 0; i < 4; i++)
             {
-                target++;
+                if (Holders.XInputHolder.availabe.Length > i)
+                {
+                    if (Holders.XInputHolder.availabe[i])
+                    {
+                        target = i;
+                        break;
+                    }
+                }
             }
+            
+            if (target < 0)
+            {
+                return;
+            }
+
+            //while (!Holders.XInputHolder.availabe[target] && target < 4)
+            //{
+            //    target++;
+            //}
 
             // Auto Connect First Available devices
             for (int a = 0; a < connectSeq.Count; a++)
