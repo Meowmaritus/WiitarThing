@@ -16,4 +16,4 @@ http://www.wiinupro.com/
 1. Click the "Install" button and wait for installation to finish.
 
 ## Full Setup Guide
-* Follow (this guide on reddit)[https://www.reddit.com/r/CloneHero/comments/bnz8x1/how_to_wirelessly_connect_wiitars_using/] but get the latest version from [the Releases tab](https://github.com/Meowmaritus/WiitarThing/releases) instead of the version linked in the reddit post.
+* Follow [this guide on reddit](https://www.reddit.com/r/CloneHero/comments/bnz8x1/how_to_wirelessly_connect_wiitars_using/) but get the latest version from [the Releases tab](https://github.com/Meowmaritus/WiitarThing/releases) instead of the version linked in the reddit post.
