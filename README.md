@@ -13,6 +13,7 @@ http://www.wiinupro.com/
 * The Wiimote-shaped slot on the guitar controller is there because **you NEED a Wiimote to connect this guitar wirelessly to a Wii or PC, as it plugs into a Wiimote as an extension controller, the same way a Nunchuck, Classic Controller, etc does**.
 * This way of connecting guitars works best on Windows 10 using the Microsoft bluetooth stack, though it is possible on windows 7 (but only very rarely works).
 * Third-party Wiimotes are not recommended *as* *they do not work 99% of the time.*
+  * This is because they cut corners, only providing the data packets that an actual Wii console needs to interact with the Wii Remote. On the other hand, official Wii Remotes go the full way providing everything a PC needs to connect to them, despite the Wii not needing any of that functionality.
 * This tutorial is for 5-fret Guitar Hero guitars only. Rock band guitars use different methods of connecting to your computer and will not with using this method.
   * For Wii Rock Band guitars, you connect them with the USB dongle in the exact same manner as a PS3 Rock Band guitar. None of this nonsense is needed.
 * This guide ***does not work for Mac or Linux***. If you are using **Linux** [please follow this guide instead](https://pastebin.com/PhyevVQt). If you are using Mac, use a [Raphnet adapter](https://www.raphnet-tech.com/products/wusbmote_1player_adapter_v3/index.php) to connect wired to your PC and do not use this guide.
