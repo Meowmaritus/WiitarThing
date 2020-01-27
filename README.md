@@ -1,6 +1,6 @@
 # About WiitarThing
-WiitarThing lets you use Wii Guitar Hero guitars (a.k.a. "Wiitars") **wirelessly** on PC with high performance (built with Clone Hero in mind). 
-To use Wiitars with a wired connection on your PC without a Wiimote or bluetooth, simply order the [Raphnet adapter](https://www.raphnet-tech.com/products/wusbmote_1player_adapter_v3/index.php) and plug it in to your PC.
+WiitarThing lets you use Wii Guitar Hero guitars (a.k.a. "Wiitars") **wirelessly** on Windows PCs with high performance (built with Clone Hero in mind). 
+To use Wiitars with a wired connection on your PC without a Wiimote or bluetooth, simply order the [Raphnet adapter](https://www.raphnet-tech.com/products/wusbmote_1player_adapter_v3/index.php) and plug it in to your PC. This software is not needed in that case.
 
 Built upon [WiinUSoft and WiinUPro's codebase](https://github.com/keypuncher/wiinupro), but not forked because the changes are too significant and messy. 
 All credit for connecting Wiimotes in general and most of the UI goes to Justin Keys.
@@ -10,13 +10,14 @@ http://www.wiinupro.com/
 # SETUP GUIDE
 
 ### Introductory Notes
-* The Wiimote-shaped slot on the guitar controller is there because **you NEED a Wiimote to connect this guitar wirelessly to a Wii or PC, as it plugs into a Wiimote as an extension controller, the same way a Nunchuck, Classic Controller, etc does**.
+* This tool is ONLY for connecting Wiitars **wirelessly** on **Windows PCs**. ***This tool does NOT apply to Mac or Linux or for connecting wii remotes over a wired connection.***
+* A Wiimote is required for this method of connection. Plug the guitar into the Wiimote in the same way you would connect a Nunchuck or Classic Controller (Pro).
 * This way of connecting guitars works best on Windows 10 using the Microsoft bluetooth stack, though it is possible on windows 7 (but only very rarely works).
-* Third-party Wiimotes are not recommended *as* *they do not work 99% of the time.*
+* Third-party Wiimotes are not recommended *as they do not work 99% of the time.*
   * This is because they cut corners, only providing the data packets that an actual Wii console needs to interact with the Wii Remote. On the other hand, official Wii Remotes go the full way providing everything a PC needs to connect to them, despite the Wii not needing any of that functionality.
 * This tutorial is for 5-fret Guitar Hero guitars only. Rock band guitars use different methods of connecting to your computer and will not with using this method.
   * For Wii Rock Band guitars, you connect them with the USB dongle in the exact same manner as a PS3 Rock Band guitar. None of this nonsense is needed.
-* This guide ***does not work for Mac or Linux***. If you are using **Linux** [please follow this guide instead](https://pastebin.com/PhyevVQt). If you are using Mac, use a [Raphnet adapter](https://www.raphnet-tech.com/products/wusbmote_1player_adapter_v3/index.php) to connect wired to your PC and do not use this guide.
+
 * You can connect up to 4 Wii guitars using this method.
 * WiitarThing will not work out of the box for the Guitar Hero 3, Guitar Hero: Aerosmith, or Guitar Hero: World Tour games for PC.
   * This is because WiitarThing makes the guitar show up as a **regular Xbox 360 gamepad**. These official PC releases of these games expect **an Xbox 360 gamepad flagged as a guitar**.
