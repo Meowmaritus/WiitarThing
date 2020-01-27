@@ -79,7 +79,7 @@ http://www.wiinupro.com/
 * **11.** If you wish, you may now reconnect any XInput-compatible devices like Xbox 360 guitars for multiplayer.
 * The SYNC only needs to be performed on Wiimotes which have not been connected in this way before. If you have a previous connected Wiimote, simply click CONNECT and press 1+2 on the Wiimote to connect it. If your Wiimote does not show up in the left side, pressing 1+2 may cause it to appear.
 
-### Connecting Wiitars (WITH A PROPRIETARY TOSHIBA BLUETOOTH ADAPTER)
+### Connecting Wiitars (WITH A STANDARD BLUETOOTH ADAPTER USING THE TOSHIBA BLUETOOTH STACK)
 * **Not reccommended except as a last resort as it does not work on Windows 10 and often doesn't work on Windows 7 for no reason**.
 * **1.** If your bluetooth adapter is official Toshiba brand, then skip to step 3.
 * **2.** For non-Toshiba bluetooth dongles, you must follow [**this long list of instructions**](http://www.wiinupro.com/tutorials/toshiba-stack) (driver test mode required etc) to install the Toshiba bluetooth drivers and software on non-Toshiba adapters.
