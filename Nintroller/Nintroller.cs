@@ -918,6 +918,21 @@ namespace NintrollerLib
                                         //break;
 
                                     case ControllerType.Drums:
+                                        _state = new WiiDrums(_calibrations.WiimoteCalibration);
+
+                                        if (_calibrations.ClassicProCalibration.CalibrationEmpty) {
+                                          _state.SetCalibration(Calibrations.CalibrationPreset.None);
+                                        } else {
+                                          _state.SetCalibration(_calibrations.ClassicProCalibration);
+                                        }
+                    
+                                        #if LOW_BANDWIDTH
+                                            applyReport = InputReport.BtnsIRExt;
+                                        #else
+                                            applyReport = InputReport.BtnsAccIRExt;
+                                        #endif
+                                        break;
+
                                     case ControllerType.TaikoDrum:
                                         // TODO: New: Musicals
                                         break;

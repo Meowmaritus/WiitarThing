@@ -281,6 +281,25 @@ namespace WiinUSoft.Holders
                     //result.Add(Inputs.Wiimote.IR_DOWN, "");
 
                     break;
+
+                case ControllerType.Drums:
+                    //TODO: When Clone Hero adds pro drums support, separate Green and Orange pads.
+                    result.Add(Inputs.WiiDrums.G, Inputs.Xbox360.A);
+                    result.Add(Inputs.WiiDrums.R, Inputs.Xbox360.B);
+                    result.Add(Inputs.WiiDrums.Y, Inputs.Xbox360.Y);
+                    result.Add(Inputs.WiiDrums.B, Inputs.Xbox360.X);
+                    result.Add(Inputs.WiiDrums.O, Inputs.Xbox360.A);
+                    result.Add(Inputs.WiiDrums.BASS, Inputs.Xbox360.LB);
+
+                    result.Add(Inputs.WiiDrums.UP, Inputs.Xbox360.UP);
+                    result.Add(Inputs.WiiDrums.DOWN, Inputs.Xbox360.DOWN);
+                    result.Add(Inputs.WiiDrums.LEFT, Inputs.Xbox360.LEFT);
+                    result.Add(Inputs.WiiDrums.RIGHT, Inputs.Xbox360.RIGHT);
+
+                    result.Add(Inputs.WiiDrums.SELECT, Inputs.Xbox360.BACK);
+                    result.Add(Inputs.WiiDrums.START, Inputs.Xbox360.START);
+                    result.Add(Inputs.WiiDrums.HOME, Inputs.Xbox360.GUIDE);
+                    break;
             }
 
             return result;
