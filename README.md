@@ -1,6 +1,6 @@
 # About WiitarThing
-WiitarThing lets you use Wii Guitar Hero guitars (a.k.a. "Wiitars") **wirelessly** on Windows PCs with high performance (built with Clone Hero in mind). 
-To use Wiitars with a wired connection on your PC without a Wiimote or bluetooth, simply order the [Raphnet adapter](https://www.raphnet-tech.com/products/wusbmote_1player_adapter_v3/index.php) and plug it in to your PC. This software is not needed in that case.
+WiitarThing lets you use Wii Guitar Hero guitars (a.k.a. "Wiitars") and Wii Guitar Hero drums (a.k.a. "Wiidrums") **wirelessly** on Windows PCs with high performance (built with Clone Hero in mind). 
+To use Wiitars or Wiidrums with a wired connection on your PC without a Wiimote or bluetooth, simply order the [Raphnet adapter](https://www.raphnet-tech.com/products/wusbmote_1player_adapter_v3/index.php) and plug it in to your PC. This software is not needed in that case.
 
 Built upon [WiinUSoft and WiinUPro's codebase](https://github.com/keypuncher/wiinupro), but not forked because the changes are too significant and messy. 
 All credit for connecting Wiimotes in general and most of the UI goes to Justin Keys.
@@ -10,15 +10,15 @@ http://www.wiinupro.com/
 # SETUP GUIDE
 
 ### Introductory Notes
-* This tool is ONLY for connecting Wiitars **wirelessly** on **Windows PCs**. ***This tool does NOT apply to Mac or Linux or for connecting wii remotes over a wired connection.***
+* This tool is ONLY for connecting Wiitars and Wiidrums **wirelessly** on **Windows PCs**. ***This tool does NOT apply to Mac or Linux or for connecting wii remotes over a wired connection.***
 * A Wiimote is required for this method of connection. Plug the guitar into the Wiimote in the same way you would connect a Nunchuck or Classic Controller (Pro).
-* This way of connecting guitars works best on Windows 10 using the Microsoft bluetooth stack, though it is possible on windows 7 (but only very rarely works).
+* This way of connecting instruments works best on Windows 10 using the Microsoft bluetooth stack, though it is possible on windows 7 (but only very rarely works).
 * Third-party Wiimotes are not recommended *as they do not work 99% of the time.*
   * This is because they cut corners, only providing the data packets that an actual Wii console needs to interact with the Wii Remote. On the other hand, official Wii Remotes go the full way providing everything a PC needs to connect to them, despite the Wii not needing any of that functionality.
-* This tutorial is for 5-fret Guitar Hero guitars only. Rock band guitars use different methods of connecting to your computer and will not with using this method.
-  * For Wii Rock Band guitars, you connect them with the USB dongle in the exact same manner as a PS3 Rock Band guitar. None of this nonsense is needed.
+* This tutorial is for 5-fret Guitar Hero guitars and Guitar Hero drums only. Rock band instruments use different methods of connecting to your computer and will not with using this method.
+  * For Wii Rock Band guitars or Wii Rock Band drums, you connect them with the USB dongle in the exact same manner as a PS3 Rock Band guitar. None of this nonsense is needed.
 
-* You can connect up to 4 Wii guitars using this method.
+* You can connect up to 4 Wii instruments using this method.
 * WiitarThing will not work out of the box for the Guitar Hero 3, Guitar Hero: Aerosmith, or Guitar Hero: World Tour games for PC.
   * This is because WiitarThing makes the guitar show up as a **regular Xbox 360 gamepad**. These official PC releases of these games expect **an Xbox 360 gamepad flagged as a guitar**.
   * To get around this, you can use [x360ce](https://www.x360ce.com/) to emulate a guitar-flagged controller.
@@ -48,9 +48,9 @@ http://www.wiinupro.com/
   * **3.2.** Download the `WiitarThing.<version>.zip` file for the latest version released.
   * **3.3.** Extract the ZIP anywhere.
 
-### Connecting Wiitars (WITH A STANDARD BLUETOOTH ADAPTER WITH MICROSOFT BLUETOOTH STACK)
+### Connecting Wiitars and Wiidrums (WITH A STANDARD BLUETOOTH ADAPTER WITH MICROSOFT BLUETOOTH STACK)
 * **1.** Open WiitarThing *AS AN ADMINISTRATOR.*
-* **2.** Plug the Wiimote into the guitar peripheral before continuing.
+* **2.** Plug the Wiimote into the peripheral before continuing.
 * **3.** Click the REMOVE ALL WIIMOTES button to make sure you do not have any Wiimotes connected to your computer (click yes if prompted)
 * **4.** Press the SYNC Button in the top left corner of WiitarThing
 * **5.** Press the red SYNC button on the inside of your Wiimote's battery cover (1+2 may also work if this is giving you issues.)
@@ -67,7 +67,7 @@ http://www.wiinupro.com/
 * The SYNC only needs to be performed on Wiimotes which have not been connected in this way before. If you have a previous connected Wiimote, simply click CONNECT and press 1+2 on the Wiimote to connect it. If your Wiimote does not show up in the left side, pressing 1+2 may cause it to appear.
 
 ### Connecting Wiitars (WITH A DOLPHINBAR)
-* **This method works flawlessly on Windows 10 and may work well on Windows 7/8/8.1 but has not been tested much on those operating systems.**
+* **This method works flawlessly on Windows 10 and may work well on Windows 7/8/8.1 but has not been tested much on those operating systems. This method was not tested for Wiidrums.**
 * **1.** Buy a DolphinBar [here](https://www.amazon.com/Mayflash-W010-Wireless-Sensor-DolphinBar/dp/B00HZWEB74) if you don't already have one.
 * **2.** Plug the DolphinBar into a USB port on your PC and click the MODE button on the DolphinBar until it goes to MODE 4.
 * **3.** Make sure to disconnect any XInput-compatible devices, including Xbox 360 controllers/guitars, Xbox One controllers, PS3/PS4 controllers, etc.
@@ -81,7 +81,7 @@ http://www.wiinupro.com/
 * The SYNC only needs to be performed on Wiimotes which have not been connected in this way before. If you have a previous connected Wiimote, simply click CONNECT and press 1+2 on the Wiimote to connect it. If your Wiimote does not show up in the left side, pressing 1+2 may cause it to appear.
 
 ### Connecting Wiitars (WITH A STANDARD BLUETOOTH ADAPTER USING THE TOSHIBA BLUETOOTH STACK)
-* **Not reccommended except as a last resort as it does not work on Windows 10 and often doesn't work on Windows 7 for no reason**.
+* **Not reccommended except as a last resort as it does not work on Windows 10 and often doesn't work on Windows 7 for no reason. This method was not tested for Wiidrums.**
 * **1.** If your bluetooth adapter is official Toshiba brand, then skip to step 3.
 * **2.** For non-Toshiba bluetooth dongles, you must follow [**this long list of instructions**](http://www.wiinupro.com/tutorials/toshiba-stack) (driver test mode required etc) to install the Toshiba bluetooth drivers and software on non-Toshiba adapters.
 * **3.** Connect the Wiimote via Toshiba bluetooth (no specific methods required, it just works like any other bluetooth device)
@@ -114,6 +114,7 @@ http://www.wiinupro.com/
 * This application supports the Classic Controller and Classic Controller Pro extensions as well. When using these, the buttons are mapped to the corresponding Xbox 360 gamepad buttons.
 * **The touch bar is not supported in this application because the Wii touch bars use even worse technology than the Xbox 360 touch bars and nobody likes them and Clone Hero doesn't support them.**
 * The tilt functionality actually comes **from the Wiimote** on Wiitars so changing Wiimotes will actually change your tilt sensitivity and responsiveness as Wiimote accelerometers are very inconsistently produced.
+* This application maps Wiidrums orange and green pads to a same Xbox 360 gamepad button, since Clone Hero currently only supports 4-lane drums. If Clone Hero adds Rock Band Pro Drums support, or Guitar Hero 5-lane drums support, this application will we updated to accommodate to those changes.
 
 ### Getting More Help If Needed
 Consult the `#help-line` channel in the [official Clone Hero server on Discord](https://discordapp.com/invite/Hsn4Cgu) if you need help following the instructions, advice on what to buy, or any other questions.

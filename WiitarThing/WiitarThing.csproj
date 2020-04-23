@@ -88,6 +88,7 @@
     <Reference Include="PresentationFramework" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="Inputs\WiiDrums.cs" />
     <Compile Include="Inputs\WiiGuitar.cs" />
     <Compile Include="WiitarDebug.cs" />
     <Compile Include="Windows\RemoveAllWiimotesWindow.xaml.cs">
@@ -314,6 +315,9 @@
   </ItemGroup>
   <ItemGroup>
     <Resource Include="GHWT_Wii_Guitar.ico" />
+  </ItemGroup>
+  <ItemGroup>
+    <Resource Include="Images\GHWT_Wii_Drums.png" />
   </ItemGroup>
   <Import Project="..\Shared\Shared.projitems" Label="Shared" />
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />

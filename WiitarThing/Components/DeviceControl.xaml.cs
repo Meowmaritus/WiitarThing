@@ -517,6 +517,27 @@ namespace WiinUSoft
                     holder.SetValue(Inputs.WiiGuitar.SELECT, wgt.Select);
 #endregion
                     break;
+
+                case ControllerType.Drums:
+#region Wii Drums
+                    WiiDrums wdr = (WiiDrums)e.state;
+
+                    holder.SetValue(Inputs.WiiDrums.G, wdr.G);
+                    holder.SetValue(Inputs.WiiDrums.R, wdr.R);
+                    holder.SetValue(Inputs.WiiDrums.Y, wdr.Y);
+                    holder.SetValue(Inputs.WiiDrums.B, wdr.B);
+                    holder.SetValue(Inputs.WiiDrums.O, wdr.O);
+                    holder.SetValue(Inputs.WiiDrums.BASS, wdr.Bass);
+
+                    holder.SetValue(Inputs.WiiDrums.UP, wdr.Up);
+                    holder.SetValue(Inputs.WiiDrums.DOWN, wdr.Down);
+                    holder.SetValue(Inputs.WiiDrums.LEFT, wdr.Left);
+                    holder.SetValue(Inputs.WiiDrums.RIGHT, wdr.Right);
+
+                    holder.SetValue(Inputs.WiiDrums.START, wdr.Start);
+                    holder.SetValue(Inputs.WiiDrums.SELECT, wdr.Select);
+#endregion
+                break;
             }
             
             holder.Update();
@@ -747,6 +768,11 @@ namespace WiinUSoft
                 case ControllerType.Guitar:
                     icon.Source = (ImageSource)Application.Current.Resources["WGTIcon"];
                     UserPrefs.Instance.UpdateDeviceIcon(devicePath, "WGTIcon");
+                    break;
+
+                case ControllerType.Drums:
+                    icon.Source = (ImageSource)Application.Current.Resources["WDRIcon"];
+                    UserPrefs.Instance.UpdateDeviceIcon(devicePath, "WDRIcon");
                     break;
 
                 default:
