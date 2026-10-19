@@ -25,7 +25,7 @@ A program that lets you connect Wii Guitar Hero instruments to a Windows PC wire
 ### Install WiitarThing
 
 1. Download and install [ViGEmBus](https://github.com/ViGEm/ViGEmBus/releases).
-2. Download WiitarThing from [the "Releases" tab](https://github.com/TheNathannator/WiitarThing/releases), and extract it into a new folder.
+2. Download WiitarThing from [the "Releases" tab](https://github.com/Meowmaritus/WiitarThing/releases), and extract it into a new folder.
 
 #### A Note About Older Versions
 
@@ -109,4 +109,6 @@ WiitarThing will not work directly for the PC versions of Guitar Hero 3, Aerosmi
 
 WiitarThing is built upon [WiinUSoft and WiinUPro](https://github.com/KeyPuncher/WiinUPro), but not forked because the changes are too significant and messy. All credit for connecting Wiimotes in general and most of the UI goes to [KeyPuncher](https://github.com/KeyPuncher).
 
-This version of WiitarThing is based on [Myst/Meowmaritus's original version](https://github.com/Meowmaritus/WiitarThing), with the original ViGEmBus code done by [MWisBest in their fork/issue](https://github.com/Meowmaritus/WiitarThing/issues/9). [Aida-Enna](https://github.com/Aida-Enna) merged the ViGEmBus code and built releases for it, and now [TheNathannator](https://github.com/TheNathannator) maintains it.
+Original ViGEmBus support implementation was done by [MWisBest in their fork/issue](https://github.com/Meowmaritus/WiitarThing/issues/9).
+
+All other contributions are logged in the Git history.

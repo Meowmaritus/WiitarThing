@@ -8,7 +8,7 @@
         <Grid.Resources>
             <local:ShowWindowCommand x:Key="ShowWindow" />
         </Grid.Resources>
-        <Label Content="Credits: Justin Keys - WiinUSoft, Meowmaritus - Guitar support, shockdude - Turntable support,&#xA;MWisBest - ViGEm support, Aida Enna - Maintenance (2020-2023), TheNathannator - Maintenance (2023-now)" HorizontalAlignment="Left" VerticalAlignment="Bottom" Padding="0" FontSize="11" Margin="8,0,0,0" Width="600" Height="32"/>
+        <Label Content="Credits: Justin Keys - WiinUSoft, Meowmaritus - Guitar support and maintenance, shockdude - Turntable support,&#xA;MWisBest - ViGEm support, Aida Enna - Maintenance, TheNathannator - Maintenance" HorizontalAlignment="Left" VerticalAlignment="Bottom" Padding="0" FontSize="11" Margin="8,0,0,0" Width="600" Height="32"/>
         <tb:TaskbarIcon x:Name="trayIcon" 
                         IconSource="/WiitarThing;component/GHWT_Wii_Guitar.ico"
                         ToolTipText="WiitarThing" 
