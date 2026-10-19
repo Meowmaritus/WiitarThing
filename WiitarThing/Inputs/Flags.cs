@@ -1,4 +1,4 @@
-﻿namespace WiinUSoft.Inputs
+﻿namespace WiitarThing.Inputs
 {
     public static class Flags
     {

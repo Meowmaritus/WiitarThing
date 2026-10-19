@@ -15,6 +15,7 @@
         Guitar               = 0x0000A4200103,
         Drums                = 0x0100A4200103,
         TaikoDrum            = 0x0000A4200111,
+        Turntable            = 0x0300A4200103,
 
         FalseState           = 0x010000000000,  // Seen when reconnecting to a Pro Controller
         PartiallyInserted    = 0xFFFFFFFFFFFF
@@ -97,7 +98,12 @@
         IR_Step2,
         IR_Step3,
         IR_Step4,
-        IR_Step5
+        IR_Step5,
+        EncryptionSetup_Step0, // so that the calculation: (AcknowledgementType)((int)_ackType - 1) will hold for the very first step as well (to inform that it failed)
+        EncryptionSetup_Step1,
+        EncryptionSetup_Step2,
+        EncryptionSetup_Step3,
+        EncryptionSetup_Step4
     }
 
     internal enum StatusType
@@ -106,5 +112,24 @@
         Requested,
         IR_Enable,
         DiscoverExtension
+    }
+
+    internal static class EnumeratorExtensions
+    {
+        public static bool IsEncryptionAck(this AcknowledgementType ackType)
+        {
+            switch (ackType)
+            {
+                case AcknowledgementType.EncryptionSetup_Step0:
+                case AcknowledgementType.EncryptionSetup_Step1:
+                case AcknowledgementType.EncryptionSetup_Step2:
+                case AcknowledgementType.EncryptionSetup_Step3:
+                case AcknowledgementType.EncryptionSetup_Step4:
+                    return true;
+
+                default:
+                    return false;
+            }
+        }
     }
 }

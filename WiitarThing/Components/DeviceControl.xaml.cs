@@ -1,14 +1,16 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Threading.Tasks;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Media;
 using NintrollerLib;
 using System.Xml.Serialization;
 using System.IO;
-using Shared.Windows;
+using System.Threading;
+using System.Diagnostics;
 
-namespace WiinUSoft
+namespace WiitarThing
 {
     public enum DeviceState
     {
@@ -39,7 +41,7 @@ namespace WiinUSoft
         // internally public members
         internal Holders.Holder holder;
         internal Property       properties;
-        internal int            targetXDevice = 0;
+        internal int            targetXDevice = -1;
         internal bool           lowBatteryFired = false;
         internal bool           identifying = false;
         internal string         dName = "";
@@ -273,7 +275,7 @@ namespace WiinUSoft
                     LoadProfile(properties.profile, xHolder);
                     xHolder.ConnectXInput(targetXDevice);
                     holder = xHolder;
-                    device.SetPlayerLED(targetXDevice);
+                    device.SetPlayerLED(targetXDevice + 1);
                     updateTimer = new System.Threading.Timer(HolderUpdate, device, 1000, UPDATE_SPEED);
                     break;
 
@@ -298,17 +300,15 @@ namespace WiinUSoft
 
             if (holder != null)
             {
+                holder.ClearAllValues();
+                holder.ClearAllMappings();
                 holder.AddMapping(DeviceType);
             }
 
             Application.Current.Dispatcher.BeginInvoke(System.Windows.Threading.DispatcherPriority.Background, 
                 new Action(() =>
                 {
-                    UpdateIcon(DeviceType);
-                    int playerNum = targetXDevice;
-                    Detatch();
-                    AssignToXinputPlayer(playerNum);
-                    UpdateIcon(DeviceType);
+                    RefreshState();
                 }
             ));
         }
@@ -329,13 +329,11 @@ namespace WiinUSoft
             }
 
 //            float intensity = 0;
-//            if (holder.Values.TryGetValue(Inputs.Flags.RUMBLE, out intensity))
+//            if (holder.Values.TryGetValue(Flags.RUMBLE, out intensity))
 //            {
 //                rumbleAmount = (int)intensity;
                 RumbleStep();
 //            }
-
-            holder.ClearAllValues();
 
             switch (e.controllerType)
             {
@@ -346,36 +344,36 @@ namespace WiinUSoft
 #region Pro Controller
                     ProController pro = (ProController)e.state;
 
-                    holder.SetValue(Inputs.ProController.A, pro.A);
-                    holder.SetValue(Inputs.ProController.B, pro.B);
-                    holder.SetValue(Inputs.ProController.X, pro.X);
-                    holder.SetValue(Inputs.ProController.Y, pro.Y);
+                    holder.SetValue(ProController.InputNames.A, pro.A);
+                    holder.SetValue(ProController.InputNames.B, pro.B);
+                    holder.SetValue(ProController.InputNames.X, pro.X);
+                    holder.SetValue(ProController.InputNames.Y, pro.Y);
 
-                    holder.SetValue(Inputs.ProController.UP, pro.Up);
-                    holder.SetValue(Inputs.ProController.DOWN, pro.Down);
-                    holder.SetValue(Inputs.ProController.LEFT, pro.Left);
-                    holder.SetValue(Inputs.ProController.RIGHT, pro.Right);
+                    holder.SetValue(ProController.InputNames.UP, pro.Up);
+                    holder.SetValue(ProController.InputNames.DOWN, pro.Down);
+                    holder.SetValue(ProController.InputNames.LEFT, pro.Left);
+                    holder.SetValue(ProController.InputNames.RIGHT, pro.Right);
 
-                    holder.SetValue(Inputs.ProController.L, pro.L);
-                    holder.SetValue(Inputs.ProController.R, pro.R);
-                    holder.SetValue(Inputs.ProController.ZL, pro.ZL);
-                    holder.SetValue(Inputs.ProController.ZR, pro.ZR);
+                    holder.SetValue(ProController.InputNames.L, pro.L);
+                    holder.SetValue(ProController.InputNames.R, pro.R);
+                    holder.SetValue(ProController.InputNames.ZL, pro.ZL);
+                    holder.SetValue(ProController.InputNames.ZR, pro.ZR);
 
-                    holder.SetValue(Inputs.ProController.START, pro.Plus);
-                    holder.SetValue(Inputs.ProController.SELECT, pro.Minus);
-                    holder.SetValue(Inputs.ProController.HOME, pro.Home);
-                    holder.SetValue(Inputs.ProController.LS, pro.LStick);
-                    holder.SetValue(Inputs.ProController.RS, pro.RStick);
+                    holder.SetValue(ProController.InputNames.START, pro.Plus);
+                    holder.SetValue(ProController.InputNames.SELECT, pro.Minus);
+                    holder.SetValue(ProController.InputNames.HOME, pro.Home);
+                    holder.SetValue(ProController.InputNames.LS, pro.LStick);
+                    holder.SetValue(ProController.InputNames.RS, pro.RStick);
 
-                    holder.SetValue(Inputs.ProController.LRIGHT, pro.LJoy.X > 0 ? pro.LJoy.X : 0f);
-                    holder.SetValue(Inputs.ProController.LLEFT,  pro.LJoy.X < 0 ? pro.LJoy.X * -1 : 0f);
-                    holder.SetValue(Inputs.ProController.LUP,    pro.LJoy.Y > 0 ? pro.LJoy.Y : 0f);
-                    holder.SetValue(Inputs.ProController.LDOWN,  pro.LJoy.Y < 0 ? pro.LJoy.Y * -1 : 0f);
+                    holder.SetValue(ProController.InputNames.LRIGHT, pro.LJoy.X > 0 ? pro.LJoy.X : 0f);
+                    holder.SetValue(ProController.InputNames.LLEFT,  pro.LJoy.X < 0 ? pro.LJoy.X * -1 : 0f);
+                    holder.SetValue(ProController.InputNames.LUP,    pro.LJoy.Y > 0 ? pro.LJoy.Y : 0f);
+                    holder.SetValue(ProController.InputNames.LDOWN,  pro.LJoy.Y < 0 ? pro.LJoy.Y * -1 : 0f);
 
-                    holder.SetValue(Inputs.ProController.RRIGHT, pro.RJoy.X > 0 ? pro.RJoy.X : 0f);
-                    holder.SetValue(Inputs.ProController.RLEFT,  pro.RJoy.X < 0 ? pro.RJoy.X * -1 : 0f);
-                    holder.SetValue(Inputs.ProController.RUP,    pro.RJoy.Y > 0 ? pro.RJoy.Y : 0f);
-                    holder.SetValue(Inputs.ProController.RDOWN,  pro.RJoy.Y < 0 ? pro.RJoy.Y * -1 : 0f);
+                    holder.SetValue(ProController.InputNames.RRIGHT, pro.RJoy.X > 0 ? pro.RJoy.X : 0f);
+                    holder.SetValue(ProController.InputNames.RLEFT,  pro.RJoy.X < 0 ? pro.RJoy.X * -1 : 0f);
+                    holder.SetValue(ProController.InputNames.RUP,    pro.RJoy.Y > 0 ? pro.RJoy.Y : 0f);
+                    holder.SetValue(ProController.InputNames.RDOWN,  pro.RJoy.Y < 0 ? pro.RJoy.Y * -1 : 0f);
 #endregion
                     break;
 
@@ -391,23 +389,23 @@ namespace WiinUSoft
 
                     SetWiimoteInputs(nun.wiimote);
 
-                    holder.SetValue(Inputs.Nunchuk.C, nun.C);
-                    holder.SetValue(Inputs.Nunchuk.Z, nun.Z);
+                    holder.SetValue(Nunchuk.InputNames.C, nun.C);
+                    holder.SetValue(Nunchuk.InputNames.Z, nun.Z);
 
-                    holder.SetValue(Inputs.Nunchuk.RIGHT, nun.joystick.X > 0 ? nun.joystick.X : 0f);
-                    holder.SetValue(Inputs.Nunchuk.LEFT,  nun.joystick.X < 0 ? nun.joystick.X * -1 : 0f);
-                    holder.SetValue(Inputs.Nunchuk.UP,    nun.joystick.Y > 0 ? nun.joystick.Y : 0f);
-                    holder.SetValue(Inputs.Nunchuk.DOWN,  nun.joystick.Y < 0 ? nun.joystick.Y * -1 : 0f);
+                    holder.SetValue(Nunchuk.InputNames.RIGHT, nun.joystick.X > 0 ? nun.joystick.X : 0f);
+                    holder.SetValue(Nunchuk.InputNames.LEFT,  nun.joystick.X < 0 ? nun.joystick.X * -1 : 0f);
+                    holder.SetValue(Nunchuk.InputNames.UP,    nun.joystick.Y > 0 ? nun.joystick.Y : 0f);
+                    holder.SetValue(Nunchuk.InputNames.DOWN,  nun.joystick.Y < 0 ? nun.joystick.Y * -1 : 0f);
 
                     //TODO: Nunchuk Accelerometer (not for 1st release)
-                    holder.SetValue(Inputs.Nunchuk.TILT_RIGHT, nun.accelerometer.X > 0 ? nun.accelerometer.X : 0f);
-                    holder.SetValue(Inputs.Nunchuk.TILT_LEFT, nun.accelerometer.X < 0 ? nun.accelerometer.X * -1 : 0f);
-                    holder.SetValue(Inputs.Nunchuk.TILT_UP, nun.accelerometer.Y > 0 ? nun.accelerometer.Y : 0f);
-                    holder.SetValue(Inputs.Nunchuk.TILT_DOWN, nun.accelerometer.Y < 0 ? nun.accelerometer.Y * -1 : 0f);
+                    holder.SetValue(Nunchuk.InputNames.TILT_RIGHT, nun.accelerometer.X > 0 ? nun.accelerometer.X : 0f);
+                    holder.SetValue(Nunchuk.InputNames.TILT_LEFT, nun.accelerometer.X < 0 ? nun.accelerometer.X * -1 : 0f);
+                    holder.SetValue(Nunchuk.InputNames.TILT_UP, nun.accelerometer.Y > 0 ? nun.accelerometer.Y : 0f);
+                    holder.SetValue(Nunchuk.InputNames.TILT_DOWN, nun.accelerometer.Y < 0 ? nun.accelerometer.Y * -1 : 0f);
 
-                    holder.SetValue(Inputs.Nunchuk.ACC_SHAKE_X, nun.accelerometer.X > 1.15f);
-                    holder.SetValue(Inputs.Nunchuk.ACC_SHAKE_Y, nun.accelerometer.Y > 1.15f);
-                    holder.SetValue(Inputs.Nunchuk.ACC_SHAKE_Z, nun.accelerometer.Z > 1.15f);
+                    holder.SetValue(Nunchuk.InputNames.ACC_SHAKE_X, nun.accelerometer.X > 1.15f);
+                    holder.SetValue(Nunchuk.InputNames.ACC_SHAKE_Y, nun.accelerometer.Y > 1.15f);
+                    holder.SetValue(Nunchuk.InputNames.ACC_SHAKE_Z, nun.accelerometer.Z > 1.15f);
 #endregion
                     break;
 
@@ -417,39 +415,39 @@ namespace WiinUSoft
 
                     SetWiimoteInputs(cc.wiimote);
 
-                    holder.SetValue(Inputs.ClassicController.A, cc.A);
-                    holder.SetValue(Inputs.ClassicController.B, cc.B);
-                    holder.SetValue(Inputs.ClassicController.X, cc.X);
-                    holder.SetValue(Inputs.ClassicController.Y, cc.Y);
+                    holder.SetValue(ClassicController.InputNames.A, cc.A);
+                    holder.SetValue(ClassicController.InputNames.B, cc.B);
+                    holder.SetValue(ClassicController.InputNames.X, cc.X);
+                    holder.SetValue(ClassicController.InputNames.Y, cc.Y);
 
-                    holder.SetValue(Inputs.ClassicController.UP, cc.Up);
-                    holder.SetValue(Inputs.ClassicController.DOWN, cc.Down);
-                    holder.SetValue(Inputs.ClassicController.LEFT, cc.Left);
-                    holder.SetValue(Inputs.ClassicController.RIGHT, cc.Right);
+                    holder.SetValue(ClassicController.InputNames.UP, cc.Up);
+                    holder.SetValue(ClassicController.InputNames.DOWN, cc.Down);
+                    holder.SetValue(ClassicController.InputNames.LEFT, cc.Left);
+                    holder.SetValue(ClassicController.InputNames.RIGHT, cc.Right);
 
-                    holder.SetValue(Inputs.ClassicController.L, cc.L.value > 0);
-                    holder.SetValue(Inputs.ClassicController.R, cc.R.value > 0);
-                    holder.SetValue(Inputs.ClassicController.ZL, cc.ZL);
-                    holder.SetValue(Inputs.ClassicController.ZR, cc.ZR);
+                    holder.SetValue(ClassicController.InputNames.L, cc.L.value > 0);
+                    holder.SetValue(ClassicController.InputNames.R, cc.R.value > 0);
+                    holder.SetValue(ClassicController.InputNames.ZL, cc.ZL);
+                    holder.SetValue(ClassicController.InputNames.ZR, cc.ZR);
 
-                    holder.SetValue(Inputs.ClassicController.START, cc.Start);
-                    holder.SetValue(Inputs.ClassicController.SELECT, cc.Select);
-                    holder.SetValue(Inputs.ClassicController.HOME, cc.Home);
+                    holder.SetValue(ClassicController.InputNames.START, cc.Start);
+                    holder.SetValue(ClassicController.InputNames.SELECT, cc.Select);
+                    holder.SetValue(ClassicController.InputNames.HOME, cc.Home);
 
-                    holder.SetValue(Inputs.ClassicController.LFULL, cc.LFull);
-                    holder.SetValue(Inputs.ClassicController.RFULL, cc.RFull);
-                    holder.SetValue(Inputs.ClassicController.LT, cc.L.value > 0.1f ? cc.L.value : 0f);
-                    holder.SetValue(Inputs.ClassicController.RT, cc.R.value > 0.1f ? cc.R.value : 0f);
+                    holder.SetValue(ClassicController.InputNames.LFULL, cc.LFull);
+                    holder.SetValue(ClassicController.InputNames.RFULL, cc.RFull);
+                    holder.SetValue(ClassicController.InputNames.LT, cc.L.value > 0.1f ? cc.L.value : 0f);
+                    holder.SetValue(ClassicController.InputNames.RT, cc.R.value > 0.1f ? cc.R.value : 0f);
 
-                    holder.SetValue(Inputs.ClassicController.LRIGHT, cc.LJoy.X > 0 ? cc.LJoy.X : 0f);
-                    holder.SetValue(Inputs.ClassicController.LLEFT, cc.LJoy.X < 0 ? cc.LJoy.X * -1 : 0f);
-                    holder.SetValue(Inputs.ClassicController.LUP, cc.LJoy.Y > 0 ? cc.LJoy.Y : 0f);
-                    holder.SetValue(Inputs.ClassicController.LDOWN, cc.LJoy.Y < 0 ? cc.LJoy.Y * -1 : 0f);
+                    holder.SetValue(ClassicController.InputNames.LRIGHT, cc.LJoy.X > 0 ? cc.LJoy.X : 0f);
+                    holder.SetValue(ClassicController.InputNames.LLEFT, cc.LJoy.X < 0 ? cc.LJoy.X * -1 : 0f);
+                    holder.SetValue(ClassicController.InputNames.LUP, cc.LJoy.Y > 0 ? cc.LJoy.Y : 0f);
+                    holder.SetValue(ClassicController.InputNames.LDOWN, cc.LJoy.Y < 0 ? cc.LJoy.Y * -1 : 0f);
 
-                    holder.SetValue(Inputs.ClassicController.RRIGHT, cc.RJoy.X > 0 ? cc.RJoy.X : 0f);
-                    holder.SetValue(Inputs.ClassicController.RLEFT, cc.RJoy.X < 0 ? cc.RJoy.X * -1 : 0f);
-                    holder.SetValue(Inputs.ClassicController.RUP, cc.RJoy.Y > 0 ? cc.RJoy.Y : 0f);
-                    holder.SetValue(Inputs.ClassicController.RDOWN, cc.RJoy.Y < 0 ? cc.RJoy.Y * -1 : 0f);
+                    holder.SetValue(ClassicController.InputNames.RRIGHT, cc.RJoy.X > 0 ? cc.RJoy.X : 0f);
+                    holder.SetValue(ClassicController.InputNames.RLEFT, cc.RJoy.X < 0 ? cc.RJoy.X * -1 : 0f);
+                    holder.SetValue(ClassicController.InputNames.RUP, cc.RJoy.Y > 0 ? cc.RJoy.Y : 0f);
+                    holder.SetValue(ClassicController.InputNames.RDOWN, cc.RJoy.Y < 0 ? cc.RJoy.Y * -1 : 0f);
 #endregion
                     break;
 
@@ -459,85 +457,133 @@ namespace WiinUSoft
 
                     SetWiimoteInputs(ccp.wiimote);
 
-                    holder.SetValue(Inputs.ClassicControllerPro.A, ccp.A);
-                    holder.SetValue(Inputs.ClassicControllerPro.B, ccp.B);
-                    holder.SetValue(Inputs.ClassicControllerPro.X, ccp.X);
-                    holder.SetValue(Inputs.ClassicControllerPro.Y, ccp.Y);
+                    holder.SetValue(ClassicControllerPro.InputNames.A, ccp.A);
+                    holder.SetValue(ClassicControllerPro.InputNames.B, ccp.B);
+                    holder.SetValue(ClassicControllerPro.InputNames.X, ccp.X);
+                    holder.SetValue(ClassicControllerPro.InputNames.Y, ccp.Y);
 
-                    holder.SetValue(Inputs.ClassicControllerPro.UP, ccp.Up);
-                    holder.SetValue(Inputs.ClassicControllerPro.DOWN, ccp.Down);
-                    holder.SetValue(Inputs.ClassicControllerPro.LEFT, ccp.Left);
-                    holder.SetValue(Inputs.ClassicControllerPro.RIGHT, ccp.Right);
+                    holder.SetValue(ClassicControllerPro.InputNames.UP, ccp.Up);
+                    holder.SetValue(ClassicControllerPro.InputNames.DOWN, ccp.Down);
+                    holder.SetValue(ClassicControllerPro.InputNames.LEFT, ccp.Left);
+                    holder.SetValue(ClassicControllerPro.InputNames.RIGHT, ccp.Right);
 
-                    holder.SetValue(Inputs.ClassicControllerPro.L, ccp.L);
-                    holder.SetValue(Inputs.ClassicControllerPro.R, ccp.R);
-                    holder.SetValue(Inputs.ClassicControllerPro.ZL, ccp.ZL);
-                    holder.SetValue(Inputs.ClassicControllerPro.ZR, ccp.ZR);
+                    holder.SetValue(ClassicControllerPro.InputNames.L, ccp.L);
+                    holder.SetValue(ClassicControllerPro.InputNames.R, ccp.R);
+                    holder.SetValue(ClassicControllerPro.InputNames.ZL, ccp.ZL);
+                    holder.SetValue(ClassicControllerPro.InputNames.ZR, ccp.ZR);
 
-                    holder.SetValue(Inputs.ClassicControllerPro.START, ccp.Start);
-                    holder.SetValue(Inputs.ClassicControllerPro.SELECT, ccp.Select);
-                    holder.SetValue(Inputs.ClassicControllerPro.HOME, ccp.Home);
+                    holder.SetValue(ClassicControllerPro.InputNames.START, ccp.Start);
+                    holder.SetValue(ClassicControllerPro.InputNames.SELECT, ccp.Select);
+                    holder.SetValue(ClassicControllerPro.InputNames.HOME, ccp.Home);
 
-                    holder.SetValue(Inputs.ClassicControllerPro.LRIGHT, ccp.LJoy.X > 0 ? ccp.LJoy.X : 0f);
-                    holder.SetValue(Inputs.ClassicControllerPro.LLEFT, ccp.LJoy.X < 0 ? ccp.LJoy.X * -1 : 0f);
-                    holder.SetValue(Inputs.ClassicControllerPro.LUP, ccp.LJoy.Y > 0 ? ccp.LJoy.Y : 0f);
-                    holder.SetValue(Inputs.ClassicControllerPro.LDOWN, ccp.LJoy.Y < 0 ? ccp.LJoy.Y * -1 : 0f);
+                    holder.SetValue(ClassicControllerPro.InputNames.LRIGHT, ccp.LJoy.X > 0 ? ccp.LJoy.X : 0f);
+                    holder.SetValue(ClassicControllerPro.InputNames.LLEFT, ccp.LJoy.X < 0 ? ccp.LJoy.X * -1 : 0f);
+                    holder.SetValue(ClassicControllerPro.InputNames.LUP, ccp.LJoy.Y > 0 ? ccp.LJoy.Y : 0f);
+                    holder.SetValue(ClassicControllerPro.InputNames.LDOWN, ccp.LJoy.Y < 0 ? ccp.LJoy.Y * -1 : 0f);
 
-                    holder.SetValue(Inputs.ClassicControllerPro.RRIGHT, ccp.RJoy.X > 0 ? ccp.RJoy.X : 0f);
-                    holder.SetValue(Inputs.ClassicControllerPro.RLEFT, ccp.RJoy.X < 0 ? ccp.RJoy.X * -1 : 0f);
-                    holder.SetValue(Inputs.ClassicControllerPro.RUP, ccp.RJoy.Y > 0 ? ccp.RJoy.Y : 0f);
-                    holder.SetValue(Inputs.ClassicControllerPro.RDOWN, ccp.RJoy.Y < 0 ? ccp.RJoy.Y * -1 : 0f);
+                    holder.SetValue(ClassicControllerPro.InputNames.RRIGHT, ccp.RJoy.X > 0 ? ccp.RJoy.X : 0f);
+                    holder.SetValue(ClassicControllerPro.InputNames.RLEFT, ccp.RJoy.X < 0 ? ccp.RJoy.X * -1 : 0f);
+                    holder.SetValue(ClassicControllerPro.InputNames.RUP, ccp.RJoy.Y > 0 ? ccp.RJoy.Y : 0f);
+                    holder.SetValue(ClassicControllerPro.InputNames.RDOWN, ccp.RJoy.Y < 0 ? ccp.RJoy.Y * -1 : 0f);
 #endregion
                     break;
 
                 case ControllerType.Guitar:
 #region Wii Guitar
-                    WiiGuitar wgt = (WiiGuitar)e.state;
+                    Guitar gtr = (Guitar)e.state;
 
-                    //SetWiimoteInputs(wgt.wiimote);
+                    //SetWiimoteInputs(gtr.wiimote);
 
-                    holder.SetValue(Inputs.WiiGuitar.G, wgt.G);
-                    holder.SetValue(Inputs.WiiGuitar.R, wgt.R);
-                    holder.SetValue(Inputs.WiiGuitar.Y, wgt.Y);
-                    holder.SetValue(Inputs.WiiGuitar.B, wgt.B);
-                    holder.SetValue(Inputs.WiiGuitar.O, wgt.O);
+                    holder.SetValue(Guitar.InputNames.G, gtr.G);
+                    holder.SetValue(Guitar.InputNames.R, gtr.R);
+                    holder.SetValue(Guitar.InputNames.Y, gtr.Y);
+                    holder.SetValue(Guitar.InputNames.B, gtr.B);
+                    holder.SetValue(Guitar.InputNames.O, gtr.O);
 
-                    holder.SetValue(Inputs.WiiGuitar.UP, wgt.Up);
-                    holder.SetValue(Inputs.WiiGuitar.DOWN, wgt.Down);
-                    holder.SetValue(Inputs.WiiGuitar.LEFT, wgt.Left);
-                    holder.SetValue(Inputs.WiiGuitar.RIGHT, wgt.Right);
+                    holder.SetValue(Guitar.InputNames.UP, gtr.Up);
+                    holder.SetValue(Guitar.InputNames.DOWN, gtr.Down);
+                    holder.SetValue(Guitar.InputNames.LEFT, gtr.Left);
+                    holder.SetValue(Guitar.InputNames.RIGHT, gtr.Right);
 
-                    holder.SetValue(Inputs.WiiGuitar.WHAMMYHIGH, wgt.WhammyHigh);
-                    holder.SetValue(Inputs.WiiGuitar.WHAMMYLOW, wgt.WhammyLow);
+                    holder.SetValue(Guitar.InputNames.WHAMMYHIGH, gtr.WhammyHigh);
+                    holder.SetValue(Guitar.InputNames.WHAMMYLOW, gtr.WhammyLow);
 
-                    holder.SetValue(Inputs.WiiGuitar.TILTHIGH, wgt.TiltHigh);
-                    holder.SetValue(Inputs.WiiGuitar.TILTLOW, wgt.TiltLow);
+                    holder.SetValue(Guitar.InputNames.TILTHIGH, gtr.TiltHigh);
+                    holder.SetValue(Guitar.InputNames.TILTLOW, gtr.TiltLow);
 
-                    holder.SetValue(Inputs.WiiGuitar.START, wgt.Start);
-                    holder.SetValue(Inputs.WiiGuitar.SELECT, wgt.Select);
+                    holder.SetValue(Guitar.InputNames.START, gtr.Start);
+                    holder.SetValue(Guitar.InputNames.SELECT, gtr.Select);
 #endregion
                     break;
 
                 case ControllerType.Drums:
 #region Wii Drums
-                    WiiDrums wdr = (WiiDrums)e.state;
+                    Drums drm = (Drums)e.state;
 
-                    holder.SetValue(Inputs.WiiDrums.G, wdr.G);
-                    holder.SetValue(Inputs.WiiDrums.R, wdr.R);
-                    holder.SetValue(Inputs.WiiDrums.Y, wdr.Y);
-                    holder.SetValue(Inputs.WiiDrums.B, wdr.B);
-                    holder.SetValue(Inputs.WiiDrums.O, wdr.O);
-                    holder.SetValue(Inputs.WiiDrums.BASS, wdr.Bass);
+                    holder.SetValue(Drums.InputNames.G, drm.G);
+                    holder.SetValue(Drums.InputNames.R, drm.R);
+                    holder.SetValue(Drums.InputNames.Y, drm.Y);
+                    holder.SetValue(Drums.InputNames.B, drm.B);
+                    holder.SetValue(Drums.InputNames.O, drm.O);
+                    holder.SetValue(Drums.InputNames.BASS, drm.Bass);
 
-                    holder.SetValue(Inputs.WiiDrums.UP, wdr.Up);
-                    holder.SetValue(Inputs.WiiDrums.DOWN, wdr.Down);
-                    holder.SetValue(Inputs.WiiDrums.LEFT, wdr.Left);
-                    holder.SetValue(Inputs.WiiDrums.RIGHT, wdr.Right);
+                    holder.SetValue(Drums.InputNames.UP, drm.Up);
+                    holder.SetValue(Drums.InputNames.DOWN, drm.Down);
+                    holder.SetValue(Drums.InputNames.LEFT, drm.Left);
+                    holder.SetValue(Drums.InputNames.RIGHT, drm.Right);
 
-                    holder.SetValue(Inputs.WiiDrums.START, wdr.Start);
-                    holder.SetValue(Inputs.WiiDrums.SELECT, wdr.Select);
+                    holder.SetValue(Drums.InputNames.START, drm.Start);
+                    holder.SetValue(Drums.InputNames.SELECT, drm.Select);
 #endregion
                 break;
+
+                case ControllerType.Turntable:
+#region Wii Turntable
+                    Turntable ttb = (Turntable)e.state;
+
+                    SetWiimoteInputs(ttb.wiimote);
+
+                    // analog
+                    holder.SetValue(Turntable.InputNames.LUP, ttb.Joy.Y > 0 ? ttb.Joy.Y : 0f);
+                    holder.SetValue(Turntable.InputNames.LDOWN, ttb.Joy.Y < 0 ? -ttb.Joy.Y : 0f);
+                    holder.SetValue(Turntable.InputNames.LLEFT, ttb.Joy.X < 0 ? -ttb.Joy.X : 0f);
+                    holder.SetValue(Turntable.InputNames.LRIGHT, ttb.Joy.X > 0 ? ttb.Joy.X : 0f);
+
+                    // digital
+                    holder.SetValue(Turntable.InputNames.UP, ttb.Joy.Y > 0.5f ? 1f : 0f);
+                    holder.SetValue(Turntable.InputNames.DOWN, ttb.Joy.Y < -0.5f ? -1f : 0f);
+                    holder.SetValue(Turntable.InputNames.LEFT, ttb.Joy.X < -0.5f ? -1f : 0f);
+                    holder.SetValue(Turntable.InputNames.RIGHT, ttb.Joy.X > 0.5f ? 1f : 0f);
+
+                    holder.SetValue(Turntable.InputNames.LTABLECLKWISE, ttb.JoyTableLR.X > 0 ? ttb.JoyTableLR.X : 0f);
+                    holder.SetValue(Turntable.InputNames.LTABLECTRCLKWISE, ttb.JoyTableLR.X < 0 ? -ttb.JoyTableLR.X : 0f);
+
+                    holder.SetValue(Turntable.InputNames.RTABLECLKWISE, ttb.JoyTableLR.Y > 0 ? ttb.JoyTableLR.Y : 0f);
+                    holder.SetValue(Turntable.InputNames.RTABLECTRCLKWISE, ttb.JoyTableLR.Y < 0 ? -ttb.JoyTableLR.Y : 0f);
+
+                    holder.SetValue(Turntable.InputNames.RG, ttb.RG);
+                    holder.SetValue(Turntable.InputNames.RR, ttb.RR);
+                    holder.SetValue(Turntable.InputNames.RB, ttb.RB);
+                    holder.SetValue(Turntable.InputNames.RBUTTONS, ttb.RButtons.value);
+
+                    holder.SetValue(Turntable.InputNames.LG, ttb.LG);
+                    holder.SetValue(Turntable.InputNames.LR, ttb.LR);
+                    holder.SetValue(Turntable.InputNames.LB, ttb.LB);
+                    holder.SetValue(Turntable.InputNames.LBUTTONS, ttb.LButtons.value);
+
+                    holder.SetValue(Turntable.InputNames.DIALCLKWISE, ttb.JoyDialCrossfade.X > 0 ? ttb.JoyDialCrossfade.X : 0f);
+                    holder.SetValue(Turntable.InputNames.DIALCTRCLKWISE, ttb.JoyDialCrossfade.X < 0 ? -ttb.JoyDialCrossfade.X : 0f);
+                    holder.SetValue(Turntable.InputNames.DIALT, ttb.Dial.value);
+
+                    holder.SetValue(Turntable.InputNames.CROSSFADERLEFT, ttb.JoyDialCrossfade.Y < 0 ? -ttb.JoyDialCrossfade.Y : 0f);
+                    holder.SetValue(Turntable.InputNames.CROSSFADERRIGHT, ttb.JoyDialCrossfade.Y > 0 ? ttb.JoyDialCrossfade.Y : 0f);
+                    holder.SetValue(Turntable.InputNames.CROSSFADERT, ttb.Crossfader.value);
+
+                    holder.SetValue(Turntable.InputNames.EUPHORIA, ttb.Euphoria);
+                    holder.SetValue(Turntable.InputNames.SELECT, ttb.Select);
+                    holder.SetValue(Turntable.InputNames.START, ttb.Start);
+#endregion
+                    break;
             }
             
             holder.Update();
@@ -562,28 +608,28 @@ namespace WiinUSoft
         {
             wm.irSensor.Normalize();
 
-            holder.SetValue(Inputs.Wiimote.A, wm.buttons.A);
-            holder.SetValue(Inputs.Wiimote.B, wm.buttons.B);
-            holder.SetValue(Inputs.Wiimote.ONE, wm.buttons.One);
-            holder.SetValue(Inputs.Wiimote.TWO, wm.buttons.Two);
+            holder.SetValue(Wiimote.InputNames.A, wm.buttons.A);
+            holder.SetValue(Wiimote.InputNames.B, wm.buttons.B);
+            holder.SetValue(Wiimote.InputNames.ONE, wm.buttons.One);
+            holder.SetValue(Wiimote.InputNames.TWO, wm.buttons.Two);
 
-            holder.SetValue(Inputs.Wiimote.UP, wm.buttons.Up);
-            holder.SetValue(Inputs.Wiimote.DOWN, wm.buttons.Down);
-            holder.SetValue(Inputs.Wiimote.LEFT, wm.buttons.Left);
-            holder.SetValue(Inputs.Wiimote.RIGHT, wm.buttons.Right);
+            holder.SetValue(Wiimote.InputNames.UP, wm.buttons.Up);
+            holder.SetValue(Wiimote.InputNames.DOWN, wm.buttons.Down);
+            holder.SetValue(Wiimote.InputNames.LEFT, wm.buttons.Left);
+            holder.SetValue(Wiimote.InputNames.RIGHT, wm.buttons.Right);
 
-            holder.SetValue(Inputs.Wiimote.MINUS, wm.buttons.Minus);
-            holder.SetValue(Inputs.Wiimote.PLUS, wm.buttons.Plus);
-            holder.SetValue(Inputs.Wiimote.HOME, wm.buttons.Home);
+            holder.SetValue(Wiimote.InputNames.MINUS, wm.buttons.Minus);
+            holder.SetValue(Wiimote.InputNames.PLUS, wm.buttons.Plus);
+            holder.SetValue(Wiimote.InputNames.HOME, wm.buttons.Home);
 
-            holder.SetValue(Inputs.Wiimote.TILT_RIGHT, wm.accelerometer.X > 0 ? wm.accelerometer.X : 0);
-            holder.SetValue(Inputs.Wiimote.TILT_LEFT, wm.accelerometer.X < 0 ? wm.accelerometer.X : 0);
-            holder.SetValue(Inputs.Wiimote.TILT_UP, wm.accelerometer.Y > 0 ? wm.accelerometer.Y : 0);
-            holder.SetValue(Inputs.Wiimote.TILT_DOWN, wm.accelerometer.Y < 0 ? wm.accelerometer.Y : 0);
+            holder.SetValue(Wiimote.InputNames.TILT_RIGHT, wm.accelerometer.X > 0 ? wm.accelerometer.X : 0);
+            holder.SetValue(Wiimote.InputNames.TILT_LEFT, wm.accelerometer.X < 0 ? wm.accelerometer.X : 0);
+            holder.SetValue(Wiimote.InputNames.TILT_UP, wm.accelerometer.Y > 0 ? wm.accelerometer.Y : 0);
+            holder.SetValue(Wiimote.InputNames.TILT_DOWN, wm.accelerometer.Y < 0 ? wm.accelerometer.Y : 0);
 
-            holder.SetValue(Inputs.Wiimote.ACC_SHAKE_X, wm.accelerometer.X > 1.15);
-            holder.SetValue(Inputs.Wiimote.ACC_SHAKE_Y, wm.accelerometer.Y > 1.15);
-            holder.SetValue(Inputs.Wiimote.ACC_SHAKE_Z, wm.accelerometer.Z > 1.15);
+            holder.SetValue(Wiimote.InputNames.ACC_SHAKE_X, wm.accelerometer.X > 1.15);
+            holder.SetValue(Wiimote.InputNames.ACC_SHAKE_Y, wm.accelerometer.Y > 1.15);
+            holder.SetValue(Wiimote.InputNames.ACC_SHAKE_Z, wm.accelerometer.Z > 1.15);
 
             if (snapIRpointer && !wm.irSensor.point1.visible && !wm.irSensor.point2.visible)
             {
@@ -600,10 +646,10 @@ namespace WiinUSoft
                 }
             }
 
-            holder.SetValue(Inputs.Wiimote.IR_RIGHT, wm.irSensor.X > 0 ? wm.irSensor.X : 0);
-            holder.SetValue(Inputs.Wiimote.IR_LEFT, wm.irSensor.X < 0 ? wm.irSensor.X : 0);
-            holder.SetValue(Inputs.Wiimote.IR_UP, wm.irSensor.Y > 0 ? wm.irSensor.Y : 0);
-            holder.SetValue(Inputs.Wiimote.IR_DOWN, wm.irSensor.Y < 0 ? wm.irSensor.Y : 0);
+            holder.SetValue(Wiimote.InputNames.IR_RIGHT, wm.irSensor.X > 0 ? wm.irSensor.X : 0);
+            holder.SetValue(Wiimote.InputNames.IR_LEFT, wm.irSensor.X < 0 ? wm.irSensor.X : 0);
+            holder.SetValue(Wiimote.InputNames.IR_UP, wm.irSensor.Y > 0 ? wm.irSensor.Y : 0);
+            holder.SetValue(Wiimote.InputNames.IR_DOWN, wm.irSensor.Y < 0 ? wm.irSensor.Y : 0);
 
             previousIR = wm.irSensor;
         }
@@ -630,7 +676,8 @@ namespace WiinUSoft
 
             bool currentRumbleState = device.RumbleEnabled;
 
-            if (!properties.useRumble)
+            // disable rumble for turntables
+            if (!properties.useRumble || device.Type == ControllerType.Turntable)
             {
                 if (currentRumbleState) device.RumbleEnabled = false;
                 return;
@@ -667,13 +714,6 @@ namespace WiinUSoft
             {
                 rumbleStepCount = 0;
             }
-        }
-
-        static System.Threading.Tasks.Task Delay(int milliseconds)
-        {
-            var tcs = new System.Threading.Tasks.TaskCompletionSource<object>();
-            new System.Threading.Timer(_ => tcs.SetResult(null)).Change(milliseconds, -1);
-            return tcs.Task;
         }
 
         private void SetBatteryStatus(bool isLow)
@@ -766,13 +806,18 @@ namespace WiinUSoft
                     break;
 
                 case ControllerType.Guitar:
-                    icon.Source = (ImageSource)Application.Current.Resources["WGTIcon"];
-                    UserPrefs.Instance.UpdateDeviceIcon(devicePath, "WGTIcon");
+                    icon.Source = (ImageSource)Application.Current.Resources["GTRIcon"];
+                    UserPrefs.Instance.UpdateDeviceIcon(devicePath, "GTRIcon");
                     break;
 
                 case ControllerType.Drums:
-                    icon.Source = (ImageSource)Application.Current.Resources["WDRIcon"];
-                    UserPrefs.Instance.UpdateDeviceIcon(devicePath, "WDRIcon");
+                    icon.Source = (ImageSource)Application.Current.Resources["DRMIcon"];
+                    UserPrefs.Instance.UpdateDeviceIcon(devicePath, "DRMIcon");
+                    break;
+
+                case ControllerType.Turntable:
+                    icon.Source = (ImageSource)Application.Current.Resources["TTBIcon"];
+                    UserPrefs.Instance.UpdateDeviceIcon(devicePath, "TTBIcon");
                     break;
 
                 default:
@@ -862,55 +907,16 @@ namespace WiinUSoft
             if (Device.Type != ControllerType.ProController)
                 MessageBox.Show("Press 1+2 on the Wii remote and press OK to continue.", "Connect Wii Remote", MessageBoxButton.OK, MessageBoxImage.Information);
 
-            if ((device.DataStream as WinBtStream).OpenConnection() && device.DataStream.CanRead)
+            if (device.DataStream.Open() && device.DataStream.CanRead)
             {
                 int tmp = 0;
                 if (int.TryParse(((MenuItem)sender).Name.Replace("XOption", ""), out tmp))
                 {
-                    AssignToXinputPlayer(tmp);
+                    AssignToXinputPlayer(tmp - 1);
                 }
             }
 
             
-        }
-
-        private void typeOption_Click(object sender, RoutedEventArgs e)
-        {
-            switch(icon.ContextMenu.Items.IndexOf(sender))
-            {
-                case 0:
-                    device.ForceControllerType(ControllerType.Unknown);
-                    break;
-
-                case 1:
-                    device.ForceControllerType(ControllerType.ProController);
-                    break;
-
-                case 2:
-                    device.ForceControllerType(ControllerType.Wiimote);
-                    break;
-
-                case 3:
-                    device.ForceControllerType(ControllerType.Nunchuk);
-                    break;
-
-                case 4:
-                    device.ForceControllerType(ControllerType.ClassicController);
-                    break;
-
-                case 5:
-                    device.ForceControllerType(ControllerType.ClassicControllerPro);
-                    break;
-
-                case 6:
-                    device.ForceControllerType(ControllerType.Guitar);
-                    break;
-
-                default:
-                    break;
-            }
-
-            RefreshState();
         }
 
         private void btnDetatch_Click(object sender, RoutedEventArgs e)
@@ -934,34 +940,46 @@ namespace WiinUSoft
 
         private void btnIdentify_Click(object sender, RoutedEventArgs e)
         {
-            bool wasConnected = Connected;
+            if (identifying)
+                return;
 
-            if (wasConnected || ((device.DataStream as WinBtStream).OpenConnection() && device.DataStream.CanRead))
+            identifying = true;
+            Task.Run(() =>
             {
-                if (!wasConnected)
-                    device.BeginReading();
-
-                identifying = true;
-                device.RumbleEnabled = true;
-                Delay(500).ContinueWith(o =>
+                bool wasConnected = Connected;
+                if (wasConnected || (device.DataStream.Open() && device.DataStream.CanRead))
                 {
-                    identifying = false;
-                    device.RumbleEnabled = false;
-                    if (!wasConnected) device.StopReading();
-                });
+                    if (!wasConnected)
+                        device.BeginReading();
 
-                // light show
-                device.SetPlayerLED(1);
-                const int LIGHTSHOW_LENGTH = 400;
-                Delay((LIGHTSHOW_LENGTH / 7) * 1).ContinueWith(o => device.SetPlayerLED(2));
-                Delay((LIGHTSHOW_LENGTH / 7) * 2).ContinueWith(o => device.SetPlayerLED(3));
-                Delay((LIGHTSHOW_LENGTH / 7) * 3).ContinueWith(o => device.SetPlayerLED(4));
-                Delay((LIGHTSHOW_LENGTH / 7) * 4).ContinueWith(o => device.SetPlayerLED(3));
-                Delay((LIGHTSHOW_LENGTH / 7) * 5).ContinueWith(o => device.SetPlayerLED(2));
-                Delay((LIGHTSHOW_LENGTH / 7) * 6).ContinueWith(o => device.SetPlayerLED(1));
-                if (targetXDevice != 0)
-                    Delay(LIGHTSHOW_LENGTH).ContinueWith(o => device.SetPlayerLED(targetXDevice));
-            }
+                    device.RumbleEnabled = true;
+
+                    // O___
+                    // _O__
+                    // __O_
+                    // ___O
+                    // __O_
+                    // _O__
+                    // O___
+                    for (int i = -3; i < 4; i++)
+                    {
+                        int led = 4 - Math.Abs(i);
+                        device.SetPlayerLED(led);
+                        Thread.Sleep(75);
+                    }
+
+                    device.RumbleEnabled = false;
+                    if (targetXDevice > -1)
+                        device.SetPlayerLED(targetXDevice + 1);
+                    else
+                        device.SetBinaryLEDs(0b1001);
+
+                    if (!wasConnected)
+                        device.StopReading();
+                }
+
+                identifying = false;
+            });
         }
 
         //private void btnVjoy_IsEnabledChanged(object sender, DependencyPropertyChangedEventArgs e)

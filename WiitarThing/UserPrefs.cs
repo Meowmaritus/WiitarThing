@@ -4,7 +4,7 @@ using System.Collections.Generic;
 using System.IO;
 using System.Xml.Serialization;
 
-namespace WiinUSoft
+namespace WiitarThing
 {
     public class UserPrefs
     {
@@ -20,9 +20,9 @@ namespace WiinUSoft
                         DataPath = AppDomain.CurrentDomain.BaseDirectory + @"\prefs.config";
                         LoadPrefs();
                     }
-                    else if (File.Exists(Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData) + @"\WiinUSoft_prefs.config"))
+                    else if (File.Exists(Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData) + @"\WiitarThing_prefs.config"))
                     {
-                        DataPath = Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData) + @"\WiinUSoft_prefs.config";
+                        DataPath = Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData) + @"\WiitarThing_prefs.config";
                         LoadPrefs();
                     }
                     else
@@ -37,7 +37,7 @@ namespace WiinUSoft
                         
                         if (!SavePrefs())
                         {
-                            DataPath = Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData) + @"\WiinUSoft_prefs.config";
+                            DataPath = Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData) + @"\WiitarThing_prefs.config";
                             SavePrefs();
                         }
                     }

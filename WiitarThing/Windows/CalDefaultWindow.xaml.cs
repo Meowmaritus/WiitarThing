@@ -1,6 +1,6 @@
 ﻿using System.Windows;
 
-namespace WiinUSoft.Windows
+namespace WiitarThing.Windows
 {
     /// <summary>
     /// Interaction logic for CalDefaultWindow.xaml

@@ -94,19 +94,19 @@ namespace NintrollerLib
         {
             InputReport type = (InputReport)input[0];
 
-            InputReport[] accepted = new InputReport[]
+            switch (type)
             {
-                InputReport.BtnsAcc,
-                InputReport.BtnsAccExt,
-                InputReport.BtnsAccIR,
-                InputReport.BtnsAccIRExt
-            };
+                case InputReport.BtnsAcc:
+                case InputReport.BtnsAccExt:
+                case InputReport.BtnsAccIR:
+                case InputReport.BtnsAccIRExt:
+                    rawX = input[offset + 0];
+                    rawY = input[offset + 1];
+                    rawZ = input[offset + 2];
+                    break;
 
-            if (accepted.Contains(type))
-            {
-                rawX = input[offset + 0];
-                rawY = input[offset + 1];
-                rawZ = input[offset + 2];
+                default:
+                    return;
             }
         }
 

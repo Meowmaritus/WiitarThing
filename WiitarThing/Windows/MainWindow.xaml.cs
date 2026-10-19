@@ -12,11 +12,10 @@ using System.Threading.Tasks;
 using System.Windows;
 using System.Windows.Threading;
 using System.Windows.Input;
-using Shared;
-using Shared.Windows;
 using System.Diagnostics;
+using Nefarius.ViGEm.Client;
 
-namespace WiinUSoft
+namespace WiitarThing
 {
     /// <summary>
     /// Interaction logic for MainWindow.xaml
@@ -39,7 +38,6 @@ namespace WiinUSoft
             return activeProcId == procId;
         }
 
-
         [DllImport("user32.dll", CharSet = CharSet.Auto, ExactSpelling = true)]
         private static extern IntPtr GetForegroundWindow();
 
@@ -56,6 +54,31 @@ namespace WiinUSoft
 
         public MainWindow()
         {
+            // Check for ViGEmBus upon startup
+            try
+            {
+                var client = new ViGEmClient();
+                client.Dispose();
+                WiitarDebug.Log("ViGEmBus found");
+            }
+            catch (Nefarius.ViGEm.Client.Exceptions.VigemBusNotFoundException)
+            {
+                WiitarDebug.Log("ViGEmBus not found");
+                if (MessageBox.Show(
+                    "WiitarThing requires the ViGEmBus driver to function.\nClick OK to get it from its releases page.",
+                    "ViGEmBus Not Found",
+                    MessageBoxButton.OKCancel,
+                    MessageBoxImage.Error,
+                    MessageBoxResult.Cancel
+                  ) == MessageBoxResult.OK
+                )
+                {
+                    Process.Start("https://github.com/ViGEm/ViGEmBus/releases");
+                }
+                Application.Current.Shutdown();
+                return;
+            }
+
             hidList = new List<DeviceInfo>();
             deviceList = new List<DeviceControl>();
 
@@ -65,7 +88,7 @@ namespace WiinUSoft
 
 
             Version version = System.Reflection.Assembly.GetEntryAssembly().GetName().Version;
-            Title = "WiitarThing " + string.Format("V{0}.{1}.{2}", version.Major, version.Minor, version.Revision);
+            Title = "WiitarThing v" + version.ToString();
 
 #if DEBUG
             Title += " Debug Build";
@@ -130,7 +153,8 @@ namespace WiinUSoft
 
         private void Refresh()
         {
-            hidList = WinBtStream.GetPaths();
+            hidList = DeviceInfo.GetPaths();
+            var fileShare = UserPrefs.Instance.greedyMode || UserPrefs.Instance.toshibaMode ? FileShare.None : FileShare.ReadWrite;
             List<KeyValuePair<int, DeviceControl>> connectSeq = new List<KeyValuePair<int, DeviceControl>>();
             
             foreach (var hid in hidList)
@@ -159,13 +183,24 @@ namespace WiinUSoft
                 }
                 else
                 {
-                    var stream = new WinBtStream(
-                        hid.DevicePath, 
-                        UserPrefs.Instance.toshibaMode ? WinBtStream.BtStack.Toshiba : WinBtStream.BtStack.Microsoft, 
-                        UserPrefs.Instance.greedyMode ? FileShare.None : FileShare.ReadWrite);
+                    if (!HidDeviceStream.TryCreate(hid.DevicePath, out var stream, fileShare))
+                    {
+                        Debug.WriteLine($"Failed to open {hid.DevicePath} in sharing mode {fileShare}");
+                        if (fileShare != FileShare.None)
+                        {
+                            continue;
+                        }
+        
+                        if (!HidDeviceStream.TryCreate(hid.DevicePath, out stream, FileShare.ReadWrite))
+                        {
+                            Debug.WriteLine($"Failed to open {hid.DevicePath} with sharing forced");
+                            continue;
+                        }
+                    }
+
                     Nintroller n = new Nintroller(stream, hid.Type);
 
-                    if (stream.OpenConnection() && stream.CanRead)
+                    if (stream.CanRead)
                     {
                         deviceList.Add(new DeviceControl(n, hid.DevicePath));
                         deviceList[deviceList.Count - 1].OnConnectStateChange += DeviceControl_OnConnectStateChange;
@@ -212,9 +247,9 @@ namespace WiinUSoft
                 {
                     if (Holders.XInputHolder.availabe[target] && target < 4)
                     {
-                        if (thingy.Value.Device.Connected || (thingy.Value.Device.DataStream as WinBtStream).OpenConnection())
+                        if (thingy.Value.Device.Connected || thingy.Value.Device.DataStream.Open())
                         {
-                            thingy.Value.targetXDevice = target + 1;
+                            thingy.Value.targetXDevice = target;
                             thingy.Value.ConnectionState = DeviceState.Connected_XInput;
                             thingy.Value.Device.BeginReading();
                             thingy.Value.Device.GetStatus();
@@ -243,9 +278,9 @@ namespace WiinUSoft
             {
                 if (Holders.XInputHolder.availabe[target] && target < 4)
                 {
-                    if (d.Value.Device.Connected || (d.Value.Device.DataStream as WinBtStream).OpenConnection())
+                    if (d.Value.Device.Connected || d.Value.Device.DataStream.Open())
                     {
-                        d.Value.targetXDevice = target + 1;
+                        d.Value.targetXDevice = target;
                         d.Value.ConnectionState = DeviceState.Connected_XInput;
                         d.Value.Device.BeginReading();
                         d.Value.Device.GetStatus();
@@ -268,7 +303,7 @@ namespace WiinUSoft
                     {
                         Thread.Sleep(1000);
                         if (_refreshToken.IsCancellationRequested) break;
-                        Application.Current.Dispatcher.BeginInvoke(DispatcherPriority.Background, new Action(() => Refresh()));
+                        Application.Current?.Dispatcher.BeginInvoke(DispatcherPriority.Background, new Action(() => Refresh()));
                     }
 
                     _refreshing = false;
@@ -286,7 +321,7 @@ namespace WiinUSoft
             try
             {
                 Version version = System.Reflection.Assembly.GetEntryAssembly().GetName().Version;
-                menu_version.Header = string.Format("Version {0}.{1}.{2}", version.Major, version.Minor, version.Revision);
+                menu_version.Header = "Version " + version.ToString(); 
             }
             catch { }
 
@@ -301,12 +336,6 @@ namespace WiinUSoft
             menu_AutoRefresh.IsChecked = UserPrefs.Instance.autoRefresh;
             menu_MsBluetooth.IsChecked = !UserPrefs.Instance.toshibaMode;
 
-            if (UserPrefs.Instance.greedyMode)
-            {
-                WinBtStream.OverrideSharingMode = true;
-                WinBtStream.OverridenFileShare = FileShare.None;
-            }
-
             Refresh();
             AutoRefresh(menu_AutoRefresh.IsChecked && ApplicationIsActivated());
         }
@@ -319,11 +348,13 @@ namespace WiinUSoft
             switch (oldState)
             {
                 case DeviceState.Discovered:
-                    groupAvailable.Children.Remove(sender);
+                    if (groupAvailable.Children.Contains(sender))
+                        groupAvailable.Children.Remove(sender);
                     break;
 
                 case DeviceState.Connected_XInput:
-                    groupXinput.Children.Remove(sender);
+                    if (groupXinput.Children.Contains(sender))
+                        groupXinput.Children.Remove(sender);
                     break;
 
                 //case DeviceState.Connected_VJoy:
@@ -334,11 +365,13 @@ namespace WiinUSoft
             switch (newState)
             {
                 case DeviceState.Discovered:
-                    groupAvailable.Children.Add(sender);
+                    if (!groupAvailable.Children.Contains(sender))
+                        groupAvailable.Children.Add(sender);
                     break;
 
                 case DeviceState.Connected_XInput:
-                    groupXinput.Children.Add(sender);
+                    if (!groupXinput.Children.Contains(sender))
+                        groupXinput.Children.Add(sender);
                     break;
 
                 //case DeviceState.Connected_VJoy:
@@ -503,11 +536,6 @@ namespace WiinUSoft
             menu_NoSharing.IsChecked = !menu_NoSharing.IsChecked;
             UserPrefs.Instance.greedyMode = menu_NoSharing.IsChecked;
             UserPrefs.SavePrefs();
-            WinBtStream.OverrideSharingMode = UserPrefs.Instance.greedyMode;
-            if (UserPrefs.Instance.greedyMode)
-            {
-                WinBtStream.OverridenFileShare = FileShare.None;
-            }
         }
 
         private void menu_AutoRefresh_Click(object sender, RoutedEventArgs e)
@@ -527,9 +555,13 @@ namespace WiinUSoft
         private void menu_MsBluetooth_Click(object sender, RoutedEventArgs e)
         {
             menu_MsBluetooth.IsChecked = !menu_MsBluetooth.IsChecked;
-            WinBtStream.ForceToshibaMode = !menu_MsBluetooth.IsChecked;
             UserPrefs.Instance.toshibaMode = !menu_MsBluetooth.IsChecked;
             UserPrefs.SavePrefs();
+        }
+
+        private void menu_Github_Click(object sender, RoutedEventArgs e)
+        {
+            Process.Start("https://github.com/TheNathannator/WiitarThing");
         }
 
         #region Shortcut Creation
@@ -537,11 +569,11 @@ namespace WiinUSoft
         {
             IShellLink link = (IShellLink)new ShellLink();
 
-            link.SetDescription("WiinUSoft");
+            link.SetDescription("WiitarThing");
             link.SetPath(new Uri(System.Reflection.Assembly.GetEntryAssembly().CodeBase).LocalPath);
 
             IPersistFile file = (IPersistFile)link;
-            file.Save(Path.Combine(path, "WiinUSoft.lnk"), false);
+            file.Save(Path.Combine(path, "WiitarThing.lnk"), false);
         }
 
         [ComImport]
@@ -633,6 +665,8 @@ namespace WiinUSoft
             return true;
         }
 
+#pragma warning disable 0067 // CanExecute will never change, this event is deliberately never used
         public event EventHandler CanExecuteChanged;
+#pragma warning restore 0067
     }
 }

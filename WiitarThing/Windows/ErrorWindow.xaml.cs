@@ -1,7 +1,7 @@
 ﻿using System;
 using System.Windows;
 
-namespace WiinUSoft
+namespace WiitarThing
 {
     /// <summary>
     /// Interaction logic for ErrorWindow.xaml

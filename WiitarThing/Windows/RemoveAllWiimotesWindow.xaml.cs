@@ -11,7 +11,7 @@ using System.Windows.Media;
 using System.Windows.Media.Imaging;
 using System.Windows.Shapes;
 
-namespace WiinUSoft.Windows
+namespace WiitarThing.Windows
 {
     /// <summary>
     /// Interaction logic for RemoveAllWiimotesWindow.xaml

@@ -2,7 +2,7 @@
 using System.Windows;
 using System.Windows.Controls;
 
-namespace WiinUSoft
+namespace WiitarThing
 {
     /// <summary>
     /// Interaction logic for PropWindow.xaml

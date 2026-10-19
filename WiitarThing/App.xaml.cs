@@ -3,52 +3,14 @@ using System;
 using System.Collections.Generic;
 using System.Windows;
 
-namespace WiinUSoft
+namespace WiitarThing
 {
     /// <summary>
     /// Interaction logic for App.xaml
     /// </summary>
     public partial class App : Application, ISingleInstanceApp
     {
-        internal const string PROFILE_FILTER = "WiinUSoft Profile|*.wsp";
-        private const string Unique = "wiinupro-or-wiinusoft-instance";
-
-        [STAThread]
-        public static void Main()
-        {
-            System.Threading.Thread.Sleep(250);
-
-            if (SingleInstance<App>.InitializeAsFirstInstance(Unique))
-            {
-                AppDomain.CurrentDomain.UnhandledException += CurrentDomain_UnhandledException;
-
-                var application = new App();
-                application.InitializeComponent();
-                application.Run();
-
-                // Allow single instance code to perform cleanup operations
-                SingleInstance<App>.Cleanup();
-            }
-        }
-
-        static void CurrentDomain_UnhandledException(object sender, UnhandledExceptionEventArgs args)
-        {
-            //MessageBox.Show("WiitarThing is about to crash. Press OK to show the crash message.", "Sorry", MessageBoxButton.OK, MessageBoxImage.Error);
-
-            Exception e = (Exception)args.ExceptionObject;
-
-            WiitarDebug.Log($"ERROR:\n----------------------------------------\n{e.ToString()}\n----------------------------------------", WiitarDebug.LogLevel.Error);
-
-            var box = new ErrorWindow(e);
-            box.ShowDialog();
-
-            SingleInstance<App>.Cleanup();
-            //Current.Dispatcher.Invoke(new Action(() => 
-            //{
-            //    var box = new ErrorWindow(e);
-            //    box.ShowDialog();
-            //}));
-        }
+        internal const string PROFILE_FILTER = "WiitarThing Profile|*.wsp";
 
         public bool SignalExternalCommandLineArgs(IList<string> args)
         {

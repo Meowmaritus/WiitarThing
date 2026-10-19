@@ -1,9 +1,9 @@
-﻿<Window x:Class="WiinUSoft.Windows.SyncWindow"
+﻿<Window x:Class="WiitarThing.Windows.SyncWindow"
         xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
-        xmlns:local="clr-namespace:WiinUSoft.Windows"
+        xmlns:local="clr-namespace:WiitarThing.Windows"
         mc:Ignorable="d"
         Title="Sync Devices" Height="300" Width="564.333" MinWidth="457" MinHeight="300" Icon="../Images/WiinUSoft_Icon32.png" Background="{DynamicResource BrushSocialBlue}" Closing="Window_Closing" Loaded="Window_Loaded">
     <Grid>

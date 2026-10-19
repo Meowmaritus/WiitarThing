@@ -4,7 +4,7 @@ using System.Windows;
 
 using NintrollerLib;
 
-namespace WiinUSoft
+namespace WiitarThing
 {
     /// <summary>
     /// Interaction logic for CalibrateWindow.xaml
@@ -45,7 +45,11 @@ namespace WiinUSoft
 
             Pro_joy_center,         // first step for pro controller
             Pro_joy_range,
-            Pro_joy_deadzone
+            Pro_joy_deadzone,
+
+            Turntable_joy_center,   // first step for turntable
+            Turntable_joy_range,
+            Turntable_joy_deadzone
         }
 
         public bool doSave = false;
@@ -114,6 +118,10 @@ namespace WiinUSoft
 
                     case ControllerType.ProController:
                         _step = CalibrationStep.Pro_joy_center;
+                        break;
+
+                    case ControllerType.Turntable:
+                        _step = CalibrationStep.Turntable_joy_center;
                         break;
 
                     default: break;
@@ -437,6 +445,40 @@ namespace WiinUSoft
                             if (pLY > group2_dead.Value) group2_dead.Value = pLY;
                             if (pRX > group3_dead.Value) group3_dead.Value = pRX;
                             if (pRY > group4_dead.Value) group4_dead.Value = pRY;
+                            break;
+                        #endregion
+
+                        #region Turntable Calibration
+                        case CalibrationStep.Turntable_joy_center:
+                            group1_center.Value = ((Turntable)e.state).Joy.rawX;
+                            group2_center.Value = ((Turntable)e.state).Joy.rawY;
+                            break;
+
+                        case CalibrationStep.Turntable_joy_range:
+                            if (group1_min.Value == 0)
+                            {
+                                group1_min.Value = ((Turntable)e.state).Joy.rawX;
+                                group2_min.Value = ((Turntable)e.state).Joy.rawY;
+
+                                group1_max.Value = ((Turntable)e.state).Joy.rawX;
+                                group2_max.Value = ((Turntable)e.state).Joy.rawY;
+                            }
+                            else
+                            {
+                                if (group1_min.Value - 32 > ((Turntable)e.state).Joy.rawX) group1_min.Value = ((Turntable)e.state).Joy.rawX;
+                                if (group1_max.Value + 32 < ((Turntable)e.state).Joy.rawX) group1_max.Value = ((Turntable)e.state).Joy.rawX;
+
+                                if (group2_min.Value - 32 > ((Turntable)e.state).Joy.rawY) group2_min.Value = ((Turntable)e.state).Joy.rawY;
+                                if (group2_max.Value + 32 < ((Turntable)e.state).Joy.rawY) group2_max.Value = ((Turntable)e.state).Joy.rawY;
+                            }
+                            break;
+
+                        case CalibrationStep.Turntable_joy_deadzone:
+                            int tX = Math.Abs(((Turntable)e.state).Joy.rawX - group1_center.Value);
+                            int tY = Math.Abs(((Turntable)e.state).Joy.rawY - group2_center.Value);
+
+                            if (tX > group1_dead.Value) group1_dead.Value = tX;
+                            if (tY > group2_dead.Value) group2_dead.Value = tY;
                             break;
                             #endregion
                     }
@@ -946,6 +988,18 @@ namespace WiinUSoft
                     _calibratedTypes.Add(ControllerType.ProController);
                     break;
 
+                case ControllerType.Turntable:
+                    _calibrations.TurntableCalibration.Joy.centerX = group1_center.Value;
+                    _calibrations.TurntableCalibration.Joy.minX = group1_min.Value;
+                    _calibrations.TurntableCalibration.Joy.maxX = group1_max.Value;
+                    _calibrations.TurntableCalibration.Joy.deadX = group1_dead.Value;
+                    _calibrations.TurntableCalibration.Joy.centerY = group2_center.Value;
+                    _calibrations.TurntableCalibration.Joy.minY = group2_min.Value;
+                    _calibrations.TurntableCalibration.Joy.maxY = group2_max.Value;
+                    _calibrations.TurntableCalibration.Joy.deadY = group2_dead.Value;
+                    _calibratedTypes.Add(ControllerType.Turntable);
+                    break;
+
                 default:
                     break;
             }
@@ -1035,6 +1089,15 @@ namespace WiinUSoft
                         group2_dead.IsEnabled = true;
                         group3_dead.IsEnabled = true;
                         group4_dead.IsEnabled = true;
+                        break;
+
+                    case CalibrationStep.Turntable_joy_center: _step = CalibrationStep.Turntable_joy_range; break;
+                    case CalibrationStep.Turntable_joy_range: _step = CalibrationStep.Turntable_joy_deadzone; break;
+                    case CalibrationStep.Turntable_joy_deadzone:
+                        _calibrationToSave = ControllerType.Turntable;
+                        _step = CalibrationStep.Done;
+                        group1_dead.IsEnabled = true;
+                        group2_dead.IsEnabled = true;
                         break;
                 }
             }

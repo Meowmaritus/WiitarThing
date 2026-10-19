@@ -5,7 +5,7 @@ using System.Windows.Input;
 using System.Windows.Media;
 using System.Windows.Media.Media3D;
 
-namespace WiinUSoft
+namespace WiitarThing
 {
     /// <summary> 
     /// A Canvas which manages dragging of the UIElements it contains.   

@@ -1,6 +1,7 @@
-﻿using System;
+using System;
 using System.Diagnostics;
 using System.IO;
+using System.Threading;
 
 namespace NintrollerLib
 {
@@ -42,14 +43,18 @@ namespace NintrollerLib
         private bool               _led1, _led2, _led3, _led4;
 
         // Read/Writing Variables
-        private Stream           _stream;                    // Read and Write Stream
+        private HidDeviceStream  _stream;                    // Read and Write Stream
         private bool             _reading    = false;        // true if actively reading
         private readonly object  _readingObj = new object(); // for locking/blocking
+        private readonly object  _writingObj = new object(); // for locking/blocking
         
         // help with parsing Reports
         private AcknowledgementType _ackType    = AcknowledgementType.NA;
-        private StatusType          _statusType = StatusType.Unknown;
+        private StatusType          _statusType = StatusType.DiscoverExtension; // initial value was originally StatusType.Unknown, but it's a good idea to be able to distinguish the first received status report from subsequent ones
         private ReadReportType      _readType   = ReadReportType.Unknown;
+
+        // boolean flag indicating whether guitar encryption has been fully set up and guitar bytes should be decrypted in every data report received
+        private bool _encryptionEnabled = false;
         #endregion
 
         #region Properties
@@ -61,7 +66,7 @@ namespace NintrollerLib
         /// <summary>
         /// The data stream to the controller.
         /// </summary>
-        public Stream DataStream { get { return _stream; } }
+        public HidDeviceStream DataStream { get { return _stream; } }
         /// <summary>
         /// The type of controller this has been identified as
         /// </summary>
@@ -271,7 +276,9 @@ namespace NintrollerLib
                     }
                     else
                     {
-                        var level = 100f * (float)_battery / 192f;
+                        // better calculation method based on: https://github.com/dolphin-emu/dolphin/blob/master/Source/Core/Core/HW/WiimoteCommon/WiimoteReport.h#L207
+                        var level = (float)_battery * 246f / 255f - 1.3f;
+                        //var level = 100f * (float)_battery / 192f;
 
                         if (level > 80f)
                             return BatteryStatus.VeryHigh;
@@ -288,6 +295,23 @@ namespace NintrollerLib
             }
         }
 
+        // wrapping the encryption flag in a property so that each change in its value will automatically be followed by an appropriate debug message
+        public bool EncryptionEnabled
+        {
+            get
+            {
+                return _encryptionEnabled;
+            }
+            set
+            {
+                if (value != _encryptionEnabled)
+                {
+                    Log("Guitar Encryption " + (value ? "enabled" : "disabled"));
+                }
+                _encryptionEnabled = value;
+            }
+        }
+
         #endregion
 
         #region Necessities
@@ -296,9 +320,9 @@ namespace NintrollerLib
         /// Creates an instance using the provided data stream.
         /// </summary>
         /// <param name="dataStream">Stream to the controller.</param>
-        public Nintroller(Stream dataStream)
+        public Nintroller(HidDeviceStream dataStream)
         {
-            _state = null;
+            _state = null; // overwrites the value given during declaration (new Wiimote())
             _stream = dataStream;
         }
 
@@ -307,9 +331,9 @@ namespace NintrollerLib
         /// </summary>
         /// <param name="dataStream">Stream to the controller.</param>
         /// <param name="hintType">Expected type of the controller.</param>
-        public Nintroller(Stream dataStream, ControllerType hintType) : this(dataStream)
+        public Nintroller(HidDeviceStream dataStream, ControllerType hintType) : this(dataStream)
         {
-            _currentType = hintType;
+            _currentType = hintType; // overwrites the value given during declaration (ControllerType.Unknown)
         }
         
         /// <summary>
@@ -350,7 +374,7 @@ namespace NintrollerLib
             }
             catch (Exception ex)
             {
-                Log("Error Connecting to device: " + ex.Message);
+                Log("Error Connecting to device: " + ex.ToString());
             }
 
             return _connected;
@@ -383,10 +407,11 @@ namespace NintrollerLib
             _connected = true;
             
             // kickoff the reading process if it hasn't started already
-            if (!_reading && _stream != null)
+            if (!_reading && _stream != null && _stream.Open())
             {
                 _reading = true;
-                ReadAsync();
+                var thread = new Thread(ReadThread);
+                thread.Start();
             }
         }
 
@@ -422,87 +447,47 @@ namespace NintrollerLib
             }
         }
 
-        // Performs an asynchronous read
-        private void ReadAsync()
+        // Performs background reading
+        private async void ReadThread()
         {
-            if (_stream != null && _stream.CanRead)
+            int reportLength = _stream.InputLength;
+            byte[] readBuffer = new byte[reportLength];
+            var cancel = new CancellationTokenSource();
+            while (_reading)
             {
-                IAsyncResult ar = null;
-                System.Threading.WaitHandle wh = null;
+                if (_stream == null || !_stream.CanRead)
+                    break;
 
-                lock (_readingObj)
+                try
                 {
-                    byte[] readResult = new byte[Constants.REPORT_LENGTH];
-                    
-                    try
+                    var readTask = _stream.ReadAsync(readBuffer, 0, readBuffer.Length, cancel.Token);
+                    if (!readTask.Wait(3000))
                     {
-                        ar = _stream.BeginRead(readResult, 0, readResult.Length, RecieveDataAsync, readResult);
-                        wh = ar.AsyncWaitHandle;
+                        // Cancel read and get status to make sure the wiimote is still connected
+                        Log("Read timed out, are we still connected?");
+                        cancel.Cancel();
+                        cancel.Dispose();
+                        cancel = new CancellationTokenSource();
+                        GetStatus();
+                        continue;
                     }
-                    catch (ObjectDisposedException)
+                    int bytesRead = await readTask;
+                    if (bytesRead < 1)
                     {
-                        Log("Can't read, the stream was disposed");
+                        Log("No data read!");
+                        continue;
                     }
-                    catch (IOException e)
-                    {
-                        Log("Error Begining Read, is it not connected?");
-                        StopReading();
-                        Disconnected?.Invoke(this, new DisconnectedEventArgs(e));
-                    }
+                    ParseReport(readBuffer);
                 }
-
-                // Wait 3 seconds for a response in the background
-                System.Threading.Tasks.Task t = new System.Threading.Tasks.Task(() =>
+                catch (Exception e)
                 {
-                    try
-                    {
-                        if (wh != null && !wh.SafeWaitHandle.IsClosed && !wh.WaitOne(3000))
-                        {
-                            // If read is not completed send a status report to check connection status
-                            GetStatus();
-                        }
-                    }
-                    catch (ObjectDisposedException)
-                    {
-                        Log("Disposed");
-                    }
-                });
-                t.Start();
-            }
-        }
-
-        // Recieve Data from reading the stream
-        private void RecieveDataAsync (IAsyncResult data)
-        {
-            try
-            {
-                // Convert the result
-                byte[] result = data.AsyncState as byte[];
-
-                // Must be called for each BeginRead()
-                _stream.EndRead(data);
-
-                ParseReport(result);
-
-                // start another read if we are still to be reading
-                if (_reading)
-                {
-                    ReadAsync();
+                    Log("Error reading: " + e.ToString());
+                    GetStatus();
+                    continue;
                 }
             }
-            catch (OperationCanceledException)
-            {
-                Log("Async Read Was Cancelled");
-            }
-            catch (IOException e)
-            {
-                Log("IO Error, is the device not connected?");
-                if (_reading || _connected)
-                {
-                    StopReading();
-                    Disconnected?.Invoke(this, new DisconnectedEventArgs(e));
-                }
-            }
+            cancel.Dispose();
+            StopReading();
         }
 
         // Request data from the device's memory
@@ -571,13 +556,18 @@ namespace NintrollerLib
                 return;
             }
             
-            try
+            lock (_writingObj)
             {
-                _stream.Write(report, 0, report.Length);
-            }
-            catch (Exception ex)
-            {
-                Log("Error while writing to the stream: " + ex.Message);
+                try
+                {
+                    _stream.Write(report, 0, report.Length);
+                }
+                catch (Exception ex)
+                {
+                    Log("Error while writing to the stream: " + ex.ToString());
+                    StopReading();
+                    Disconnected?.Invoke(this, new DisconnectedEventArgs(ex));
+                }
             }
         }
 
@@ -615,6 +605,42 @@ namespace NintrollerLib
 
             SendData(buffer);
         }
+
+        // This function decrypts the 6 guitar bytes in the given buffer starting at the given offset, assuming the encryption key is 16 zero bytes.
+        private void GuitarDecryptBuffer(byte[] data, int offset)
+        {
+            /* The standard decryption method when the key is 16 zero bytes is to use the transformation shown here:
+               https://wiibrew.org/wiki/Wiimote/Extension_Controllers#Registers_.2F_Initialization, where table1[x] and table2[x] are all 0x97
+               (or 0x17, which is equivalent). However, this value did NOT work for the Nyko Frontman, producing results not in line with the expected format.
+               The guitar apparently reacts differently to an all-zeros key, as hinted here: https://github.com/dolphin-emu/dolphin/blob/master/Source/Core/Core/HW/WiimoteEmu/Encryption.cpp#L501
+               Nevertheless, this function also includes the standard method, in case there are other guitars out there requiring encryption to work,
+               whose responses can be decrypted correctly using 0x97.
+               To distinguish the Nyko Frontman from those other guitars, we try decrypting the 5th byte using 0x97, then checking if the bits guaranteed to be 1
+               by the format are actually 1. The 5th byte was chosen because it's very predictable - only 3 of its bits can vary (Down, -, +) so it has the
+               smallest amount of possible values.
+            */
+            byte decrypted = (byte)(((data[offset + 4] ^ 0x97) + 0x97) & 0xFF);
+            bool useCommonValue = (data[offset + 4] != 0xFF) && ((decrypted & 0xAB) == 0xAB);
+
+            for (int i = 0; i < 6; i++)
+            {
+                if (useCommonValue)
+                {
+                    data[offset + i] = (byte)(((data[offset + i] ^ 0x97) + 0x97) & 0xFF);
+                }
+                else
+                {
+                    /* The Nyko Frontman uses the value 0x4D. Basically I found it by taking some examples of encrypted bytes I got from the guitar which don't decrypt
+                       correctly with 0x97, then trying all possible values until reaching the one that decrypts all of them correctly.
+                    */
+                    data[offset + i] = (byte)(((data[offset + i] ^ 0x4D) + 0x4D) & 0xFF);
+                }
+            }
+
+#if DEBUG // explicit check here to avoid constant garbage allocations in release
+            Log("Decrypted guitar bytes: " + BitConverter.ToString(data, offset, 6));
+#endif
+        }
         #endregion
 
         #region Data Parsing
@@ -630,7 +656,6 @@ namespace NintrollerLib
                 case InputReport.Status:
                     #region Parse Status
                     Log("Status Report");
-                    Log(BitConverter.ToString(report));
                     // core buttons can be parsed if desired
 
                     switch (_statusType)
@@ -644,7 +669,44 @@ namespace NintrollerLib
                             break;
 
                         case StatusType.Unknown:
+                        case StatusType.DiscoverExtension:
                         default:
+                            /* Based on observations, while the Nyko Frontman is connected to the Wiimote (before being configured properly by WiitarThing),
+                               every few seconds the Wiimote sends status reports where the extension controller bit is alternating between 0 and 1
+                               from one report to another. These contradicting reports disrupt the extension discovery process, causing it to toggle between
+                               a Wiimote and a Guitar, all of this while the guitar remains physically connected.
+                               They also disrupt further initialization steps (e.g. a status report claiming no extension is connected arrives while setting up guitar
+                               encryption). To summarize, it's best to ignore a status report in two cases:
+                               1. It's not the report that is specifically requested right after connecting the device (determined by _statusType == StatusType.Unknown,
+                                  hence why _statusType is first initialized to StatusType.DiscoverExtension), and it's received when the current type
+                                  is not known (determined by _state == null, _currentType is initialized to Wiimote in the constructor so it couldn't be used).
+                               2. It's received during guitar encryption setup or IR camera setup (detectable via _ackType).
+                            */
+                            if ((_statusType == StatusType.Unknown && _state == null) ||
+                                (_ackType.ToString().StartsWith("EncryptionSetup") || _ackType.ToString().StartsWith("IR_Step")))
+                            {
+                                break;
+                            }
+
+                            /* In case an unsolicited status report arrives when the controller type is already known to be a guitar,
+                               it can mean one of two things:
+                               1. The guitar was unplugged from the Wiimote (extension controller bit is 0). In this case we have to respond to this report
+                                  like we normally would (perform steps to determine the updated controller type - Wiimote).
+                               2. Normally, the Nyko Frontman is recognized as a guitar, then we request the Wiimote to stream data periodically, then it sends reports
+                                  where all extension bytes are 0x00, prompting us to setup guitar encryption. But sometimes it sends reports where all extension bytes
+                                  are 0xFF, and a few seconds later a status report with extension controller bit = 1 is received. Repeating the extension discovery process
+                                  WITHOUT INTERRUPTIONS has turned out to solve this issue.
+                            */
+                            if (_statusType == StatusType.Unknown && _currentType == ControllerType.Guitar)
+                            {
+                                EncryptionEnabled = false; // in either case we start over, so no need to keep decrypting guitar bytes in data streams
+                                if ((report[3] & 0x02) != 0)
+                                {
+                                    // in the second case, we don't ignore the current report but we make sure to ignore subsequent reports by setting _state to null
+                                    _state = null;
+                                }
+                            }
+
                             // Battery Level
                             _battery = report[6];
                             bool lowBattery = (report[3] & 0x01) != 0;
@@ -698,13 +760,13 @@ namespace NintrollerLib
                             }
                             break;
                     }
+                    _statusType = StatusType.Unknown; // all status reports after the first are classified as unknown
                     #endregion
                     break;
 
                 case InputReport.ReadMem:
                     #region Parse ReadMem
                     Log("Read Memory Report | " + _readType.ToString());
-                    Log(BitConverter.ToString(report));
 
                     bool noError = (report[3] & 0xF) == 0;
                     if (!noError)
@@ -719,8 +781,9 @@ namespace NintrollerLib
                                 // TODO: Can report[0] ever be equal to 0x04 here? Considering it has to be 0x21 to get here...
                                 if (report[0] != 0x04)
                                 {
-                                    WriteToMemory(Constants.REGISTER_EXTENSION_INIT_1, new byte[] { 0x55 });
-                                    WriteToMemory(Constants.REGISTER_EXTENSION_INIT_2, new byte[] { 0x00 });
+                                    // second write might not be necessary according to lines 47-48 here: http://www.nerdkits.com/forum/thread/972/#:~:text=//**Above%20comment%20direct%20from%20wiibrew
+                                    WriteToMemory(Constants.REGISTER_EXTENSION_INIT_1, StaticBuffers.ExtensionInit1);
+                                    WriteToMemory(Constants.REGISTER_EXTENSION_INIT_2, StaticBuffers.ExtensionInit2);
                                 }
                             }
 
@@ -729,9 +792,9 @@ namespace NintrollerLib
                             break;
 
                         case ReadReportType.Extension_B:
+                            _readType = ReadReportType.Unknown;
                             if (report.Length < 6)
                             {
-                                _readType = ReadReportType.Unknown;
                                 Log("Report length not long enough for Extension_B");
                                 return;
                             }
@@ -778,6 +841,10 @@ namespace NintrollerLib
 
                                 switch (newType)
                                 {
+                                    /* TODO: A Wiimote with no extension shouldn't actually be identified by the value 0x000000000000,
+                                       but rather by whether or not error 7 is received when reading the expansion type, according to this paragraph:
+                                       https://wiibrew.org/wiki/Wiimote/Extension_Controllers#The_New_Way:~:text=Contrary%20to%20previous%20documentation
+                                    */
                                     case ControllerType.Wiimote:
                                         _state = new Wiimote();
                                         if (_calibrations.WiimoteCalibration.CalibrationEmpty)
@@ -879,7 +946,7 @@ namespace NintrollerLib
                                         break;
 
                                     case ControllerType.Guitar:
-                                        _state = new WiiGuitar(_calibrations.WiimoteCalibration);
+                                        _state = new Guitar(_calibrations.WiimoteCalibration);
 
                                         if (_calibrations.ClassicProCalibration.CalibrationEmpty)
                                         {
@@ -894,6 +961,22 @@ namespace NintrollerLib
 #else
                                         applyReport = InputReport.BtnsAccExt;
 #endif
+
+                                        break;
+
+                                    case ControllerType.Turntable:
+                                        _state = new Turntable(_calibrations.WiimoteCalibration);
+
+                                        if (_calibrations.ClassicProCalibration.CalibrationEmpty)
+                                        {
+                                            _state.SetCalibration(Calibrations.CalibrationPreset.None);
+                                        }
+                                        else
+                                        {
+                                            _state.SetCalibration(_calibrations.TurntableCalibration);
+                                        }
+
+                                        applyReport = InputReport.BtnsAccExt;
 
                                         break;
 
@@ -918,7 +1001,7 @@ namespace NintrollerLib
                                         //break;
 
                                     case ControllerType.Drums:
-                                        _state = new WiiDrums(_calibrations.WiimoteCalibration);
+                                        _state = new Drums(_calibrations.WiimoteCalibration);
 
                                         if (_calibrations.ClassicProCalibration.CalibrationEmpty) {
                                           _state.SetCalibration(Calibrations.CalibrationPreset.None);
@@ -971,8 +1054,25 @@ namespace NintrollerLib
                     if (report[4] == 0x03)
                     {
                         Log("Possible Error with Operation");
-                        Log(BitConverter.ToString(report));
                         return;
+                    }
+
+                    /* If one of the memory writes as part of encryption setup is acknowledged with a non-zero error code (meaning the write failed, which rarely happens),
+                       it happens because a status report claiming no extension is connected was received just before and was (rightfully) ignored.
+                       Based on observations with the Nyko Frontman, the fastest way to recover from this is to abort the encryption setup, wait for
+                       the next status report (which will have extension controller bit = 1) and start over.
+                    */
+
+                    if (_ackType.IsEncryptionAck() && report[4] != 0x00)
+                    {
+                        _ackType = (AcknowledgementType)((int)_ackType - 1); // the current _ackType is already the step following the one that failed, so we take it back
+                        Log(_ackType.ToString() + " failed with error code " + report[4].ToString() + ". Aborting");
+                        _ackType = AcknowledgementType.NA;
+                        break;
+
+                        // the original reaction was to retry the write that failed, but it just kept failing...
+                        //_ackType = (AcknowledgementType)((int)_ackType - 1);
+                        //Log(_ackType.ToString() + " failed with error code " + report[4].ToString() + ", retrying");
                     }
 
                     switch (_ackType)
@@ -980,7 +1080,6 @@ namespace NintrollerLib
                         case AcknowledgementType.NA:
 #region Default Acknowledgement
                             Log("Acknowledgement Report");
-                            Log(BitConverter.ToString(report));
                             // Core buttons can be parsed here
                             // 20 BB BB LF 00 00 VV
                             // 20 = Acknowledgement Report
@@ -1036,36 +1135,36 @@ namespace NintrollerLib
                             switch (_irSensitivity)
                             {
                                 case IRCamSensitivity.Custom:
-                                    sensitivityBlock1 = new byte[] { 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x90, 0x00, 0xC0 };
+                                    sensitivityBlock1 = StaticBuffers.SensitivityBlock1_Custom;
                                     break;
 
                                 case IRCamSensitivity.CustomHigh:
-                                    sensitivityBlock1 = new byte[] { 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x90, 0x00, 0x41 };
+                                    sensitivityBlock1 = StaticBuffers.SensitivityBlock1_CustomHigh;
                                     break;
 
                                 case IRCamSensitivity.CustomMax:
-                                    sensitivityBlock1 = new byte[] { 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0xFF, 0x00, 0x0C };
+                                    sensitivityBlock1 = StaticBuffers.SensitivityBlock1_CustomMax;
                                     break;
 
                                 case IRCamSensitivity.Level1:
-                                    sensitivityBlock1 = new byte[] { 0x02, 0x00, 0x00, 0x71, 0x01, 0x00, 0x64, 0x00, 0xFE };
+                                    sensitivityBlock1 = StaticBuffers.SensitivityBlock1_Level1;
                                     break;
                                     
                                 case IRCamSensitivity.Level2:
-                                    sensitivityBlock1 = new byte[] { 0x02, 0x00, 0x00, 0x71, 0x01, 0x00, 0x96, 0x00, 0xB4 };
+                                    sensitivityBlock1 = StaticBuffers.SensitivityBlock1_Level2;
                                     break;
 
                                 case IRCamSensitivity.Level4:
-                                    sensitivityBlock1 = new byte[] { 0x02, 0x00, 0x00, 0x71, 0x01, 0x00, 0xc8, 0x00, 0x36 };
+                                    sensitivityBlock1 = StaticBuffers.SensitivityBlock1_Level4;
                                     break;
 
                                 case IRCamSensitivity.Level5:
-                                    sensitivityBlock1 = new byte[] { 0x07, 0x00, 0x00, 0x71, 0x01, 0x00, 0x72, 0x00, 0x20 };
+                                    sensitivityBlock1 = StaticBuffers.SensitivityBlock1_Level5;
                                     break;
 
                                 case IRCamSensitivity.Level3:
                                 default:
-                                    sensitivityBlock1 = new byte[] { 0x02, 0x00, 0x00, 0x71, 0x01, 0x00, 0xaa, 0x00, 0x64 };
+                                    sensitivityBlock1 = StaticBuffers.SensitivityBlock1_Level3;
                                     break;
                             }
 
@@ -1081,36 +1180,36 @@ namespace NintrollerLib
                             switch (_irSensitivity)
                             {
                                 case IRCamSensitivity.Custom:
-                                    sensitivityBlock2 = new byte[] { 0x40, 0x00 };
+                                    sensitivityBlock2 = StaticBuffers.SensitivityBlock2_Custom;
                                     break;
 
                                 case IRCamSensitivity.CustomHigh:
-                                    sensitivityBlock2 = new byte[] { 0x40, 0x00 };
+                                    sensitivityBlock2 = StaticBuffers.SensitivityBlock2_CustomHigh;
                                     break;
 
                                 case IRCamSensitivity.CustomMax:
-                                    sensitivityBlock2 = new byte[] { 0x00, 0x00 };
+                                    sensitivityBlock2 = StaticBuffers.SensitivityBlock2_CustomMax;
                                     break;
 
                                 case IRCamSensitivity.Level1:
-                                    sensitivityBlock2 = new byte[] { 0xFD, 0x05 };
+                                    sensitivityBlock2 = StaticBuffers.SensitivityBlock2_Level1;
                                     break;
                                     
                                 case IRCamSensitivity.Level2:
-                                    sensitivityBlock2 = new byte[] { 0xB3, 0x04 };
+                                    sensitivityBlock2 = StaticBuffers.SensitivityBlock2_Level2;
                                     break;
 
                                 case IRCamSensitivity.Level4:
-                                    sensitivityBlock2 = new byte[] { 0x35, 0x03 };
+                                    sensitivityBlock2 = StaticBuffers.SensitivityBlock2_Level4;
                                     break;
 
                                 case IRCamSensitivity.Level5:
-                                    sensitivityBlock2 = new byte[] { 0x1F, 0x03 };
+                                    sensitivityBlock2 = StaticBuffers.SensitivityBlock2_Level5;
                                     break;
 
                                 case IRCamSensitivity.Level3:
                                 default:
-                                    sensitivityBlock2 = new byte[] { 0x63, 0x03 };
+                                    sensitivityBlock2 = StaticBuffers.SensitivityBlock2_Level3;
                                     break;
                             }
 
@@ -1126,7 +1225,7 @@ namespace NintrollerLib
 
                         case AcknowledgementType.IR_Step4:
                             _ackType = AcknowledgementType.IR_Step5;
-                            WriteToMemory(Constants.REGISTER_IR, new byte[] { 0x08 });
+                            WriteToMemory(Constants.REGISTER_IR, StaticBuffers.SensitivityBlock4);
                             break;
 
                         case AcknowledgementType.IR_Step5:
@@ -1156,10 +1255,28 @@ namespace NintrollerLib
 #endregion
                             break;
 
+                        // The encryption key used is 16 zero bytes, since it makes decryption easier as seen in GuitarDecryptBuffer()
+                        case AcknowledgementType.EncryptionSetup_Step1:
+                            _ackType = AcknowledgementType.EncryptionSetup_Step2;
+                            WriteToMemory(0x04a40040, new byte[] { 0x00, 0x00, 0x00, 0x00, 0x00, 0x00 }); // writing first 6-byte block of the encryption key
+                            break;
+                        case AcknowledgementType.EncryptionSetup_Step2:
+                            _ackType = AcknowledgementType.EncryptionSetup_Step3;
+                            WriteToMemory(0x04a40046, new byte[] { 0x00, 0x00, 0x00, 0x00, 0x00, 0x00 }); // writing second 6-byte block of the encryption key
+                            break;
+                        case AcknowledgementType.EncryptionSetup_Step3:
+                            _ackType = AcknowledgementType.EncryptionSetup_Step4;
+                            WriteToMemory(0x04a4004C, new byte[] { 0x00, 0x00, 0x00, 0x00 }); // writing last 4 bytes of the encryption key
+                            break;
+                        case AcknowledgementType.EncryptionSetup_Step4:
+                            _ackType = AcknowledgementType.NA;
+                            EncryptionEnabled = true; // having completed encryption setup, we turn on the flag to start decrypting guitar bytes in the incoming data reports
+                            ApplyReportingType(InputReport.BtnsAccIRExt, true); // requesting the Wiimote to stream 0x37 data reports (the report type observed in GH3 Bluetooth traffic)
+                            break;
+
                         default:
                             Log("Unhandled acknowledgement");
                             _ackType = AcknowledgementType.NA;
-                            Log(BitConverter.ToString(report));
                             break;
                     }
 #endregion
@@ -1176,25 +1293,92 @@ namespace NintrollerLib
                 case InputReport.BtnsIRExt:
                 case InputReport.BtnsAccIRExt:
                 case InputReport.ExtOnly:
-                    if (_state != null)
+                    if (_state != null && _currentType != ControllerType.Unknown)
                     {
+                        // ignoring input reports arriving while guitar encryption is being set up
+                        if (_ackType.IsEncryptionAck())
+                        {
+                            break;
+                        }
+
+                        if (_currentType == ControllerType.Guitar)
+                        {
+                            // use the appropriate offset where extension bytes begin, based on the data report type
+                            int offset;
+                            switch (input)
+                            {
+                                case InputReport.BtnsExt:
+                                case InputReport.BtnsExtB:
+                                    offset = 3;
+                                    break;
+                                case InputReport.BtnsAccExt:
+                                    offset = 6;
+                                    break;
+                                case InputReport.BtnsIRExt:
+                                    offset = 13;
+                                    break;
+                                case InputReport.BtnsAccIRExt:
+                                    offset = 16;
+                                    break;
+                                case InputReport.ExtOnly:
+                                    offset = 1;
+                                    break;
+                                default:
+                                    return;
+                            }
+                            if (_encryptionEnabled)
+                            {
+                                GuitarDecryptBuffer(report, offset); // modify the report to contain decrypted guitar bytes
+                            }
+                            else
+                            {
+                                bool allZero = true;
+                                for (int i = offset; i < offset + 6; i++)
+                                {
+                                    if (report[i] != 0)
+                                    {
+                                        allZero = false;
+                                        break;
+                                    }
+                                }
+
+                                if (allZero) // checking this only if _encryptionEnabled=false
+                                {
+                                    /* ASSUMPTION: if all guitar bytes are zero, it means the guitar will send its real data only after setting up encryption
+                                    as described here: https://wiibrew.org/wiki/Wiimote/Extension_Controllers#Encryption_setup
+                                    This conclusion was reached by sniffing Bluetooth traffic while playing Guitar Hero 3 on the Dolphin emulator with
+                                    the Nyko Frontman guitar (where it worked just fine, hence why the capture was performed - to find out how).
+                                    Note: the real guitar data can never be 6 zero bytes, based on the known format (which applies here since the received report
+                                    is not encrypted): https://wiibrew.org/wiki/Wiimote/Extension_Controllers/Guitar_Hero_(Wii)_Guitars#Data_Format
+                                    */
+                                    _ackType = AcknowledgementType.EncryptionSetup_Step1;
+                                    WriteToMemory(Constants.REGISTER_EXTENSION_INIT_1, new byte[] { 0xAA }); // step 0 - write 0xAA to register 0xF0
+                                    return;
+                                    // continue other steps in Acknowledgement Reporting
+                                }
+                            }
+                        }
+
                         _state.Update(report);
                         var arg = new NintrollerStateEventArgs(_currentType, _state, BatteryLevel);
 
                         try
                         {
-                            // got an access violation here once
-                            //StateUpdate(this, arg);
-
-                            // let's try not including the sender
-                            StateUpdate(null, arg);
+                            StateUpdate(this, arg);
                         }
                         catch (Exception ex)
                         {
-#if DEBUG
-                            Debug.WriteLine("State Update Exception: " + ex.Message);
-#endif
+                            Debug.WriteLine("State Update Exception: " + ex.ToString());
                         }
+                    }
+                    else if (_statusType != StatusType.DiscoverExtension &&
+                            _readType != ReadReportType.Extension_A &&
+                            _readType != ReadReportType.Extension_B)
+                    {
+                        Log("State is null! Requesting status");
+                        _currentType = ControllerType.Unknown;
+                        _statusType = StatusType.DiscoverExtension;
+                        GetStatus();
                     }
                     break;
 #endregion
@@ -1326,7 +1510,7 @@ namespace NintrollerLib
             SendData(buffer);
 
             _ackType = AcknowledgementType.IR_Step1;
-            WriteToMemory(Constants.REGISTER_IR, new byte[] { 0x08 });
+            WriteToMemory(Constants.REGISTER_IR, StaticBuffers.SensitivityBlockInit);
             // continue other steps in Acknowledgement Reporting
         }
 
@@ -1350,7 +1534,7 @@ namespace NintrollerLib
             // TODO: New: Motion Plus
             // determine if we need to pass through Nunchuck or Classic Controller
             //WriteByte(Constants.REGISTER_MOTIONPLUS_INIT, 0x04);
-            //WriteToMemory(Constants.REGISTER_MOTIONPLUS_INIT, new byte[] { 0x04 });
+            //WriteToMemory(Constants.REGISTER_MOTIONPLUS_INIT, StaticBuffers.MotionPlusInit);
         }
 
         /// <summary>
@@ -1422,6 +1606,9 @@ namespace NintrollerLib
         {
             _reading = false;
             _connected = false;
+            _ackType = AcknowledgementType.NA;
+            _statusType = StatusType.Unknown;
+            _readType = ReadReportType.Unknown;
         }
 
 #endregion
@@ -1464,7 +1651,8 @@ namespace NintrollerLib
                 _currentType == ControllerType.NunchukB ||
                 _currentType == ControllerType.ClassicController || 
                 _currentType == ControllerType.ClassicControllerPro ||
-                _currentType == ControllerType.Guitar))
+                _currentType == ControllerType.Guitar ||
+                _currentType == ControllerType.Turntable))
             {
                 _state.SetCalibration(wiimoteCalibration);
             }
@@ -1521,6 +1709,19 @@ namespace NintrollerLib
                 _state.SetCalibration(proCalibration);
             }
         }
+        /// <summary>
+        /// Sets the controller calibration for the Turntable
+        /// </summary>
+        /// <param name="turntableCalibration">The Turntable Struct with the calibration values to use</param>
+        public void SetCalibration(Turntable turntableCalibration)
+        {
+            _calibrations.TurntableCalibration = turntableCalibration;
+
+            if (_state != null && _currentType == ControllerType.Turntable)
+            {
+                _state.SetCalibration(turntableCalibration);
+            }
+        }
 
 #endregion
     }
@@ -1530,7 +1731,7 @@ namespace NintrollerLib
     /// <summary>
     /// Class for controller state update.
     /// </summary>
-    public class NintrollerStateEventArgs : EventArgs
+    public struct NintrollerStateEventArgs
     {
         /// <summary>
         /// The controller type being updated.

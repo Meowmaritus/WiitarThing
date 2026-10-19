@@ -11,7 +11,7 @@ using System.Xml.Serialization;
 
 using NintrollerLib;
 
-namespace WiinUSoft
+namespace WiitarThing
 {
     /// <summary>
     /// Interaction logic for ConfigWindow.xaml
@@ -147,144 +147,138 @@ namespace WiinUSoft
             mapValues.Add(x_noneClick, "");
             #endregion
 
-#if MouseMode
-            // Mouse Mode
-            mapShapes.Add("MouseMode", mouseClick);
-            mapValues.Add(mouseClick, "MouseMode");
-#endif
-
             deviceShapes = new Dictionary<Shape, string>();
             if (deviceType == ControllerType.ProController)
             {
                 #region Pro Clickables
-                deviceShapes.Add(pro_aClick     , Inputs.ProController.A);
-                deviceShapes.Add(pro_bClick     , Inputs.ProController.B);
-                deviceShapes.Add(pro_xClick     , Inputs.ProController.X);
-                deviceShapes.Add(pro_yClick     , Inputs.ProController.Y);
-                deviceShapes.Add(pro_lClick     , Inputs.ProController.L);
-                deviceShapes.Add(pro_zlClick    , Inputs.ProController.ZL);
-                deviceShapes.Add(pro_lsClick    , Inputs.ProController.LS);
-                deviceShapes.Add(pro_rClick     , Inputs.ProController.R);
-                deviceShapes.Add(pro_zrClick    , Inputs.ProController.ZR);
-                deviceShapes.Add(pro_rsClick    , Inputs.ProController.RS);
-                deviceShapes.Add(pro_upClick    , Inputs.ProController.UP);
-                deviceShapes.Add(pro_downClick  , Inputs.ProController.DOWN);
-                deviceShapes.Add(pro_leftClick  , Inputs.ProController.LEFT);
-                deviceShapes.Add(pro_rightClick , Inputs.ProController.RIGHT);
-                deviceShapes.Add(pro_lupClick   , Inputs.ProController.LUP);
-                deviceShapes.Add(pro_ldownClick , Inputs.ProController.LDOWN);
-                deviceShapes.Add(pro_lleftClick , Inputs.ProController.LLEFT);
-                deviceShapes.Add(pro_lrightClick, Inputs.ProController.LRIGHT);
-                deviceShapes.Add(pro_rupClick   , Inputs.ProController.RUP);
-                deviceShapes.Add(pro_rdownClick , Inputs.ProController.RDOWN);
-                deviceShapes.Add(pro_rleftClick , Inputs.ProController.RLEFT);
-                deviceShapes.Add(pro_rrightClick, Inputs.ProController.RRIGHT);
-                deviceShapes.Add(pro_startClick , Inputs.ProController.START);
-                deviceShapes.Add(pro_selectClick, Inputs.ProController.SELECT);
-                deviceShapes.Add(pro_homeClick  , Inputs.ProController.HOME);
+                deviceShapes.Add(pro_aClick     , ProController.InputNames.A);
+                deviceShapes.Add(pro_bClick     , ProController.InputNames.B);
+                deviceShapes.Add(pro_xClick     , ProController.InputNames.X);
+                deviceShapes.Add(pro_yClick     , ProController.InputNames.Y);
+                deviceShapes.Add(pro_lClick     , ProController.InputNames.L);
+                deviceShapes.Add(pro_zlClick    , ProController.InputNames.ZL);
+                deviceShapes.Add(pro_lsClick    , ProController.InputNames.LS);
+                deviceShapes.Add(pro_rClick     , ProController.InputNames.R);
+                deviceShapes.Add(pro_zrClick    , ProController.InputNames.ZR);
+                deviceShapes.Add(pro_rsClick    , ProController.InputNames.RS);
+                deviceShapes.Add(pro_upClick    , ProController.InputNames.UP);
+                deviceShapes.Add(pro_downClick  , ProController.InputNames.DOWN);
+                deviceShapes.Add(pro_leftClick  , ProController.InputNames.LEFT);
+                deviceShapes.Add(pro_rightClick , ProController.InputNames.RIGHT);
+                deviceShapes.Add(pro_lupClick   , ProController.InputNames.LUP);
+                deviceShapes.Add(pro_ldownClick , ProController.InputNames.LDOWN);
+                deviceShapes.Add(pro_lleftClick , ProController.InputNames.LLEFT);
+                deviceShapes.Add(pro_lrightClick, ProController.InputNames.LRIGHT);
+                deviceShapes.Add(pro_rupClick   , ProController.InputNames.RUP);
+                deviceShapes.Add(pro_rdownClick , ProController.InputNames.RDOWN);
+                deviceShapes.Add(pro_rleftClick , ProController.InputNames.RLEFT);
+                deviceShapes.Add(pro_rrightClick, ProController.InputNames.RRIGHT);
+                deviceShapes.Add(pro_startClick , ProController.InputNames.START);
+                deviceShapes.Add(pro_selectClick, ProController.InputNames.SELECT);
+                deviceShapes.Add(pro_homeClick  , ProController.InputNames.HOME);
                 #endregion
             }
             else
             {
                 #region Wiimote Clickalbes
-                deviceShapes.Add(wm_aClick,         Inputs.Wiimote.A);
-                deviceShapes.Add(wm_bClick,         Inputs.Wiimote.B);
-                deviceShapes.Add(wm_upClick,        Inputs.Wiimote.UP);
-                deviceShapes.Add(wm_downClick,      Inputs.Wiimote.DOWN);
-                deviceShapes.Add(wm_leftClick,      Inputs.Wiimote.LEFT);
-                deviceShapes.Add(wm_rightClick,     Inputs.Wiimote.RIGHT);
-                deviceShapes.Add(wm_oneClick,       Inputs.Wiimote.ONE);
-                deviceShapes.Add(wm_twoClick,       Inputs.Wiimote.TWO);
-                deviceShapes.Add(wm_homeClick,      Inputs.Wiimote.HOME);
-                deviceShapes.Add(wm_selectClick,    Inputs.Wiimote.MINUS);
-                deviceShapes.Add(wm_startClick,     Inputs.Wiimote.PLUS);
-                deviceShapes.Add(wm_accXClick,      Inputs.Wiimote.ACC_SHAKE_X);
-                deviceShapes.Add(wm_accYClick,      Inputs.Wiimote.ACC_SHAKE_Y);
-                deviceShapes.Add(wm_accZClick,      Inputs.Wiimote.ACC_SHAKE_Z);
-                deviceShapes.Add(wm_aRollClick,     Inputs.Wiimote.TILT_RIGHT);
-                deviceShapes.Add(wm_aRollNegClick,  Inputs.Wiimote.TILT_LEFT);
-                deviceShapes.Add(wm_aPitchClick,    Inputs.Wiimote.TILT_UP);
-                deviceShapes.Add(wm_aPitchNegClick, Inputs.Wiimote.TILT_DOWN);
-                deviceShapes.Add(wm_irRightClick,   Inputs.Wiimote.IR_RIGHT);
-                deviceShapes.Add(wm_irLeftClick,    Inputs.Wiimote.IR_LEFT);
-                deviceShapes.Add(wm_irUpClick,      Inputs.Wiimote.IR_UP);
-                deviceShapes.Add(wm_irDownClick,    Inputs.Wiimote.IR_DOWN);
+                deviceShapes.Add(wm_aClick,         Wiimote.InputNames.A);
+                deviceShapes.Add(wm_bClick,         Wiimote.InputNames.B);
+                deviceShapes.Add(wm_upClick,        Wiimote.InputNames.UP);
+                deviceShapes.Add(wm_downClick,      Wiimote.InputNames.DOWN);
+                deviceShapes.Add(wm_leftClick,      Wiimote.InputNames.LEFT);
+                deviceShapes.Add(wm_rightClick,     Wiimote.InputNames.RIGHT);
+                deviceShapes.Add(wm_oneClick,       Wiimote.InputNames.ONE);
+                deviceShapes.Add(wm_twoClick,       Wiimote.InputNames.TWO);
+                deviceShapes.Add(wm_homeClick,      Wiimote.InputNames.HOME);
+                deviceShapes.Add(wm_selectClick,    Wiimote.InputNames.MINUS);
+                deviceShapes.Add(wm_startClick,     Wiimote.InputNames.PLUS);
+                deviceShapes.Add(wm_accXClick,      Wiimote.InputNames.ACC_SHAKE_X);
+                deviceShapes.Add(wm_accYClick,      Wiimote.InputNames.ACC_SHAKE_Y);
+                deviceShapes.Add(wm_accZClick,      Wiimote.InputNames.ACC_SHAKE_Z);
+                deviceShapes.Add(wm_aRollClick,     Wiimote.InputNames.TILT_RIGHT);
+                deviceShapes.Add(wm_aRollNegClick,  Wiimote.InputNames.TILT_LEFT);
+                deviceShapes.Add(wm_aPitchClick,    Wiimote.InputNames.TILT_UP);
+                deviceShapes.Add(wm_aPitchNegClick, Wiimote.InputNames.TILT_DOWN);
+                deviceShapes.Add(wm_irRightClick,   Wiimote.InputNames.IR_RIGHT);
+                deviceShapes.Add(wm_irLeftClick,    Wiimote.InputNames.IR_LEFT);
+                deviceShapes.Add(wm_irUpClick,      Wiimote.InputNames.IR_UP);
+                deviceShapes.Add(wm_irDownClick,    Wiimote.InputNames.IR_DOWN);
                 #endregion
 
                 if (deviceType == ControllerType.ClassicController)
                 {
                     #region Classic Clickables
-                    deviceShapes.Add(cc_aClick     , Inputs.ClassicController.A);
-                    deviceShapes.Add(cc_bClick     , Inputs.ClassicController.B);
-                    deviceShapes.Add(cc_xClick     , Inputs.ClassicController.X);
-                    deviceShapes.Add(cc_yClick     , Inputs.ClassicController.Y);
-                    deviceShapes.Add(cc_lClick     , Inputs.ClassicController.LT);
-                    deviceShapes.Add(cc_zlClick    , Inputs.ClassicController.ZL);
-                    deviceShapes.Add(cc_rClick     , Inputs.ClassicController.RT);
-                    deviceShapes.Add(cc_zrClick    , Inputs.ClassicController.ZR);
-                    deviceShapes.Add(cc_upClick    , Inputs.ClassicController.UP);
-                    deviceShapes.Add(cc_downClick  , Inputs.ClassicController.DOWN);
-                    deviceShapes.Add(cc_leftClick  , Inputs.ClassicController.LEFT);
-                    deviceShapes.Add(cc_rightClick , Inputs.ClassicController.RIGHT);
-                    deviceShapes.Add(cc_lupClick   , Inputs.ClassicController.LUP);
-                    deviceShapes.Add(cc_ldownClick , Inputs.ClassicController.LDOWN);
-                    deviceShapes.Add(cc_lleftClick , Inputs.ClassicController.LLEFT);
-                    deviceShapes.Add(cc_lrightClick, Inputs.ClassicController.LRIGHT);
-                    deviceShapes.Add(cc_rupClick   , Inputs.ClassicController.RUP);
-                    deviceShapes.Add(cc_rdownClick , Inputs.ClassicController.RDOWN);
-                    deviceShapes.Add(cc_rleftClick , Inputs.ClassicController.RLEFT);
-                    deviceShapes.Add(cc_rrightClick, Inputs.ClassicController.RRIGHT);
-                    deviceShapes.Add(cc_startClick , Inputs.ClassicController.START);
-                    deviceShapes.Add(cc_selectClick, Inputs.ClassicController.SELECT);
-                    deviceShapes.Add(cc_homeClick  , Inputs.ClassicController.HOME);
+                    deviceShapes.Add(cc_aClick     , ClassicController.InputNames.A);
+                    deviceShapes.Add(cc_bClick     , ClassicController.InputNames.B);
+                    deviceShapes.Add(cc_xClick     , ClassicController.InputNames.X);
+                    deviceShapes.Add(cc_yClick     , ClassicController.InputNames.Y);
+                    deviceShapes.Add(cc_lClick     , ClassicController.InputNames.LT);
+                    deviceShapes.Add(cc_zlClick    , ClassicController.InputNames.ZL);
+                    deviceShapes.Add(cc_rClick     , ClassicController.InputNames.RT);
+                    deviceShapes.Add(cc_zrClick    , ClassicController.InputNames.ZR);
+                    deviceShapes.Add(cc_upClick    , ClassicController.InputNames.UP);
+                    deviceShapes.Add(cc_downClick  , ClassicController.InputNames.DOWN);
+                    deviceShapes.Add(cc_leftClick  , ClassicController.InputNames.LEFT);
+                    deviceShapes.Add(cc_rightClick , ClassicController.InputNames.RIGHT);
+                    deviceShapes.Add(cc_lupClick   , ClassicController.InputNames.LUP);
+                    deviceShapes.Add(cc_ldownClick , ClassicController.InputNames.LDOWN);
+                    deviceShapes.Add(cc_lleftClick , ClassicController.InputNames.LLEFT);
+                    deviceShapes.Add(cc_lrightClick, ClassicController.InputNames.LRIGHT);
+                    deviceShapes.Add(cc_rupClick   , ClassicController.InputNames.RUP);
+                    deviceShapes.Add(cc_rdownClick , ClassicController.InputNames.RDOWN);
+                    deviceShapes.Add(cc_rleftClick , ClassicController.InputNames.RLEFT);
+                    deviceShapes.Add(cc_rrightClick, ClassicController.InputNames.RRIGHT);
+                    deviceShapes.Add(cc_startClick , ClassicController.InputNames.START);
+                    deviceShapes.Add(cc_selectClick, ClassicController.InputNames.SELECT);
+                    deviceShapes.Add(cc_homeClick  , ClassicController.InputNames.HOME);
                     #endregion
                 }
                 else if (deviceType == ControllerType.ClassicControllerPro)
                 {
                     #region Classic Pro Clickables
-                    deviceShapes.Add(ccp_aClick     , Inputs.ClassicControllerPro.A);
-                    deviceShapes.Add(ccp_bClick     , Inputs.ClassicControllerPro.B);
-                    deviceShapes.Add(ccp_xClick     , Inputs.ClassicControllerPro.X);
-                    deviceShapes.Add(ccp_yClick     , Inputs.ClassicControllerPro.Y);
-                    deviceShapes.Add(ccp_lClick     , Inputs.ClassicControllerPro.L);
-                    deviceShapes.Add(ccp_zlClick    , Inputs.ClassicControllerPro.ZL);
-                    deviceShapes.Add(ccp_rClick     , Inputs.ClassicControllerPro.R);
-                    deviceShapes.Add(ccp_zrClick    , Inputs.ClassicControllerPro.ZR);
-                    deviceShapes.Add(ccp_upClick    , Inputs.ClassicControllerPro.UP);
-                    deviceShapes.Add(ccp_downClick  , Inputs.ClassicControllerPro.DOWN);
-                    deviceShapes.Add(ccp_leftClick  , Inputs.ClassicControllerPro.LEFT);
-                    deviceShapes.Add(ccp_rightClick , Inputs.ClassicControllerPro.RIGHT);
-                    deviceShapes.Add(ccp_lupClick   , Inputs.ClassicControllerPro.LUP);
-                    deviceShapes.Add(ccp_ldownClick , Inputs.ClassicControllerPro.LDOWN);
-                    deviceShapes.Add(ccp_lleftClick , Inputs.ClassicControllerPro.LLEFT);
-                    deviceShapes.Add(ccp_lrightClick, Inputs.ClassicControllerPro.LRIGHT);
-                    deviceShapes.Add(ccp_rupClick   , Inputs.ClassicControllerPro.RUP);
-                    deviceShapes.Add(ccp_rdownClick , Inputs.ClassicControllerPro.RDOWN);
-                    deviceShapes.Add(ccp_rleftClick , Inputs.ClassicControllerPro.RLEFT);
-                    deviceShapes.Add(ccp_rrightClick, Inputs.ClassicControllerPro.RRIGHT);
-                    deviceShapes.Add(ccp_startClick , Inputs.ClassicControllerPro.START);
-                    deviceShapes.Add(ccp_selectClick, Inputs.ClassicControllerPro.SELECT);
-                    deviceShapes.Add(ccp_homeClick  , Inputs.ClassicControllerPro.HOME);
+                    deviceShapes.Add(ccp_aClick     , ClassicControllerPro.InputNames.A);
+                    deviceShapes.Add(ccp_bClick     , ClassicControllerPro.InputNames.B);
+                    deviceShapes.Add(ccp_xClick     , ClassicControllerPro.InputNames.X);
+                    deviceShapes.Add(ccp_yClick     , ClassicControllerPro.InputNames.Y);
+                    deviceShapes.Add(ccp_lClick     , ClassicControllerPro.InputNames.L);
+                    deviceShapes.Add(ccp_zlClick    , ClassicControllerPro.InputNames.ZL);
+                    deviceShapes.Add(ccp_rClick     , ClassicControllerPro.InputNames.R);
+                    deviceShapes.Add(ccp_zrClick    , ClassicControllerPro.InputNames.ZR);
+                    deviceShapes.Add(ccp_upClick    , ClassicControllerPro.InputNames.UP);
+                    deviceShapes.Add(ccp_downClick  , ClassicControllerPro.InputNames.DOWN);
+                    deviceShapes.Add(ccp_leftClick  , ClassicControllerPro.InputNames.LEFT);
+                    deviceShapes.Add(ccp_rightClick , ClassicControllerPro.InputNames.RIGHT);
+                    deviceShapes.Add(ccp_lupClick   , ClassicControllerPro.InputNames.LUP);
+                    deviceShapes.Add(ccp_ldownClick , ClassicControllerPro.InputNames.LDOWN);
+                    deviceShapes.Add(ccp_lleftClick , ClassicControllerPro.InputNames.LLEFT);
+                    deviceShapes.Add(ccp_lrightClick, ClassicControllerPro.InputNames.LRIGHT);
+                    deviceShapes.Add(ccp_rupClick   , ClassicControllerPro.InputNames.RUP);
+                    deviceShapes.Add(ccp_rdownClick , ClassicControllerPro.InputNames.RDOWN);
+                    deviceShapes.Add(ccp_rleftClick , ClassicControllerPro.InputNames.RLEFT);
+                    deviceShapes.Add(ccp_rrightClick, ClassicControllerPro.InputNames.RRIGHT);
+                    deviceShapes.Add(ccp_startClick , ClassicControllerPro.InputNames.START);
+                    deviceShapes.Add(ccp_selectClick, ClassicControllerPro.InputNames.SELECT);
+                    deviceShapes.Add(ccp_homeClick  , ClassicControllerPro.InputNames.HOME);
                     #endregion
                 }
                 else if (deviceType == ControllerType.Nunchuk 
                       || deviceType == ControllerType.NunchukB)
                 {
                     #region Nunchuk Clickables
-                    deviceShapes.Add(nk_cClick, Inputs.Nunchuk.C);
-                    deviceShapes.Add(nk_zClick, Inputs.Nunchuk.Z);
-                    deviceShapes.Add(nk_upClick, Inputs.Nunchuk.UP);
-                    deviceShapes.Add(nk_downClick, Inputs.Nunchuk.DOWN);
-                    deviceShapes.Add(nk_leftClick, Inputs.Nunchuk.LEFT);
-                    deviceShapes.Add(nk_rightClick, Inputs.Nunchuk.RIGHT);
+                    deviceShapes.Add(nk_cClick,         Nunchuk.InputNames.C);
+                    deviceShapes.Add(nk_zClick,         Nunchuk.InputNames.Z);
+                    deviceShapes.Add(nk_upClick,        Nunchuk.InputNames.UP);
+                    deviceShapes.Add(nk_downClick,      Nunchuk.InputNames.DOWN);
+                    deviceShapes.Add(nk_leftClick,      Nunchuk.InputNames.LEFT);
+                    deviceShapes.Add(nk_rightClick,     Nunchuk.InputNames.RIGHT);
                     // TODO: other Nunchuk Clickables (Acc) (not for 1st release)
-                    deviceShapes.Add(nk_aRightClick, Inputs.Nunchuk.ACC_SHAKE_X);
-                    deviceShapes.Add(nk_aUpClick, Inputs.Nunchuk.ACC_SHAKE_Y);
-                    deviceShapes.Add(nk_aForwardClick, Inputs.Nunchuk.ACC_SHAKE_Z);
-                    deviceShapes.Add(nk_aRollClick, Inputs.Nunchuk.TILT_LEFT);
-                    deviceShapes.Add(nk_aRollNegClick, Inputs.Nunchuk.TILT_RIGHT);
-                    deviceShapes.Add(nk_aPitchClick, Inputs.Nunchuk.TILT_UP);
-                    deviceShapes.Add(nk_aPitchNegClick, Inputs.Nunchuk.TILT_DOWN);
+                    deviceShapes.Add(nk_aRightClick,    Nunchuk.InputNames.ACC_SHAKE_X);
+                    deviceShapes.Add(nk_aUpClick,       Nunchuk.InputNames.ACC_SHAKE_Y);
+                    deviceShapes.Add(nk_aForwardClick,  Nunchuk.InputNames.ACC_SHAKE_Z);
+                    deviceShapes.Add(nk_aRollClick,     Nunchuk.InputNames.TILT_LEFT);
+                    deviceShapes.Add(nk_aRollNegClick,  Nunchuk.InputNames.TILT_RIGHT);
+                    deviceShapes.Add(nk_aPitchClick,    Nunchuk.InputNames.TILT_UP);
+                    deviceShapes.Add(nk_aPitchNegClick, Nunchuk.InputNames.TILT_DOWN);
                     #endregion
                 }
             }

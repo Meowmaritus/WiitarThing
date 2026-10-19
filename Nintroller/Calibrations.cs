@@ -604,7 +604,7 @@
                 }
             };
 
-            public WiiGuitar WiiGuitarDefault = new WiiGuitar()
+            public Guitar GuitarDefault = new Guitar()
             {
                 Joy = new Joystick()
                 {
@@ -617,6 +617,81 @@
                     minY = 0x10,
                     maxY = 0x30,
                     deadY = 0
+                }
+            };
+
+            public Turntable TurntableDefault = new Turntable()
+            {
+                Joy = new Joystick()
+                {
+                    centerX = 31,
+                    minX = 0,
+                    maxX = 63,
+                    deadX = 4,
+
+                    centerY = 31,
+                    minY = 0,
+                    maxY = 63,
+                    deadY = 4
+                },
+                JoyTableLR = new Joystick()
+                {
+                    // Wii default turntable range
+                    centerX = 32,
+                    minX = 0,
+                    maxX = 63,
+                    deadX = 0,
+
+                    centerY = 32,
+                    minY = 0,
+                    maxY = 63,
+                    deadY = 0
+
+                    // 360 LS is 0-65535, 360 turntable range is 0-255
+                    // Wii turntable range is 0-63 so max Wii "LS" range should be 16383
+                    //centerX = 8192,
+                    //minX = 0,
+                    //maxX = 16383,
+                    //deadX = 0,
+
+                    //centerY = 8192,
+                    //minY = 0,
+                    //maxY = 16383,
+                    //deadY = 0
+                },
+                JoyDialCrossfade = new Joystick()
+                {
+                    centerX = 16,
+                    minX = 0,
+                    maxX = 31,
+                    deadX = 0,
+
+                    centerY = 8,
+                    minY = 0,
+                    maxY = 15,
+                    deadY = 0
+                },
+                LButtons = new Trigger()
+                {
+                    // 360 trigger max range
+                    min = 0,
+                    max = 255
+                },
+                RButtons = new Trigger()
+                {
+                    // 360 trigger max range
+                    min = 0,
+                    max = 255
+                },
+                Dial = new Trigger()
+                {
+                    min = 0,
+                    max = 31
+                },
+                Crossfader = new Trigger()
+                {
+                    min = 0,
+                    max = 15
                 }
             };
         }
@@ -1008,6 +1083,10 @@
         /// Holder for Wii Classic Controller Pro calibration
         /// </summary>
         public ClassicControllerPro ClassicProCalibration;
+        /// <summary>
+        /// Holder for Wii Turntable calibration
+        /// </summary>
+        public Turntable TurntableCalibration;
 
         /// <summary>
         /// Default constructor setting all calibrations to their defaults.
@@ -1019,6 +1098,7 @@
             NunchukCalibration    = Calibrations.Defaults.NunchukDefault;
             ClassicCalibration    = Calibrations.Defaults.ClassicControllerDefault;
             ClassicProCalibration = Calibrations.Defaults.ClassicControllerProDefault;
+            TurntableCalibration  = Calibrations.Defaults.TurntableDefault;
         }
 
         /// <summary>
@@ -1062,6 +1142,10 @@
                 {
                     ProCalibration.SetCalibration(calStr);
                 }
+                else if (calStr.StartsWith("ttb"))
+                {
+                    TurntableCalibration.SetCalibration(calStr);
+                }
             }
         }
 
@@ -1071,6 +1155,7 @@
         /// <param name="preset"></param>
         public void SetCalibrations(Calibrations.CalibrationPreset preset)
         {
+            // for turntables, only Default calibration is implemented
             switch (preset)
             {
                 case Calibrations.CalibrationPreset.Default:
@@ -1079,6 +1164,7 @@
                     NunchukCalibration    = Calibrations.Defaults.NunchukDefault;
                     ClassicCalibration    = Calibrations.Defaults.ClassicControllerDefault;
                     ClassicProCalibration = Calibrations.Defaults.ClassicControllerProDefault;
+                    TurntableCalibration  = Calibrations.Defaults.TurntableDefault;
                     break;
 
                 case Calibrations.CalibrationPreset.Modest:
@@ -1087,6 +1173,7 @@
                     NunchukCalibration    = Calibrations.Moderate.NunchukModest;
                     ClassicCalibration    = Calibrations.Moderate.ClassicControllerModest;
                     ClassicProCalibration = Calibrations.Moderate.ClassicControllerProModest;
+                    TurntableCalibration  = Calibrations.Defaults.TurntableDefault;
                     break;
 
                 case Calibrations.CalibrationPreset.Extra:
@@ -1095,6 +1182,7 @@
                     NunchukCalibration    = Calibrations.Extras.NunchukExtra;
                     ClassicCalibration    = Calibrations.Extras.ClassicControllerExtra;
                     ClassicProCalibration = Calibrations.Extras.ClassicControllerProExtra;
+                    TurntableCalibration  = Calibrations.Defaults.TurntableDefault;
                     break;
 
                 case Calibrations.CalibrationPreset.Minimum:
@@ -1103,6 +1191,7 @@
                     NunchukCalibration    = Calibrations.Minimum.NunchukMinimal;
                     ClassicCalibration    = Calibrations.Minimum.ClassicControllerMinimal;
                     ClassicProCalibration = Calibrations.Minimum.ClassicControllerProMinimal;
+                    TurntableCalibration  = Calibrations.Defaults.TurntableDefault;
                     break;
 
                 case Calibrations.CalibrationPreset.None:
@@ -1111,6 +1200,7 @@
                     NunchukCalibration    = Calibrations.None.NunchukRaw;
                     ClassicCalibration    = Calibrations.None.ClassicControllerRaw;
                     ClassicProCalibration = Calibrations.None.ClassicControllerProRaw;
+                    TurntableCalibration  = Calibrations.Defaults.TurntableDefault;
                     break;
             }
         }
@@ -1128,6 +1218,7 @@
             text += ClassicCalibration.GetCalibrationString();
             text += ClassicProCalibration.GetCalibrationString();
             text += ProCalibration.GetCalibrationString();
+            text += TurntableCalibration.GetCalibrationString();
 
             return text;
         }

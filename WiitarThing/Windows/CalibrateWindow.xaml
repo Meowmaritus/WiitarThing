@@ -1,7 +1,7 @@
 ﻿<Window
         xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-        xmlns:local="clr-namespace:WiinUSoft" xmlns:d="http://schemas.microsoft.com/expression/blend/2008" xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006" mc:Ignorable="d" x:Class="WiinUSoft.CalibrateWindow"
+        xmlns:local="clr-namespace:WiitarThing" xmlns:d="http://schemas.microsoft.com/expression/blend/2008" xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006" mc:Ignorable="d" x:Class="WiitarThing.CalibrateWindow"
         Title="Calibration" Height="423.8" Width="805" Background="{DynamicResource BrushSocialBlue}" Icon="../Images/WiinUSoft_Icon32.png" Closing="Window_Closing">
     <Grid>
         <Label x:Name="title" Content="Wiimote" HorizontalAlignment="Left" VerticalAlignment="Top" Height="26" FontWeight="Bold" Margin="10,0,0,0"/>

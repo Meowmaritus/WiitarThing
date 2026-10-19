@@ -2,16 +2,16 @@
         xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         xmlns:tb="http://www.hardcodet.net/taskbar"
-        xmlns:local="clr-namespace:WiinUSoft" x:Class="WiinUSoft.MainWindow"
+        xmlns:local="clr-namespace:WiitarThing" x:Class="WiitarThing.MainWindow"
         Title="WiitarThing" Height="480" Width="574" Loaded="Window_Loaded" Icon="/WiitarThing;component/Images/GHWT_Wii_Guitar.png" Background="{DynamicResource BrushSocialBlue}" StateChanged="Window_StateChanged" MinWidth="624" MinHeight="480" Closing="Window_Closing">
     <Grid>
         <Grid.Resources>
             <local:ShowWindowCommand x:Key="ShowWindow" />
         </Grid.Resources>
-        <Label Content="Built upon WiinUSoft by Justin Keys. Guitar support added by Meowmaritus." HorizontalAlignment="Left" VerticalAlignment="Bottom" Padding="2" FontSize="12" Margin="8,0,0,3" Width="412"/>
+        <Label Content="Credits: Justin Keys - WiinUSoft, Meowmaritus - Guitar support and maintenance, shockdude - Turntable support,&#xA;MWisBest - ViGEm support, Aida Enna - Maintenance, TheNathannator - Maintenance" HorizontalAlignment="Left" VerticalAlignment="Bottom" Padding="0" FontSize="11" Margin="8,0,0,0" Width="600" Height="32"/>
         <tb:TaskbarIcon x:Name="trayIcon" 
                         IconSource="/WiitarThing;component/GHWT_Wii_Guitar.ico"
-                        ToolTipText="WiinUSoft" 
+                        ToolTipText="WiitarThing" 
                         Visibility="Hidden"
                         DoubleClickCommand="{StaticResource ShowWindow}">
             <tb:TaskbarIcon.ContextMenu>
@@ -27,7 +27,7 @@
                 <StackPanel x:Name="groupAvailable" HorizontalAlignment="Left" Width="280" Margin="4,4,0,0"/>
             </ScrollViewer>
         </Border>
-        <Border CornerRadius="0" BorderBrush="{DynamicResource BrushJohnTheRevelator}" Background="{DynamicResource BrushAntemWhite}" BorderThickness="2" Margin="308,84,0,64" HorizontalAlignment="Left" Width="292">
+        <Border CornerRadius="0" BorderBrush="{DynamicResource BrushJohnTheRevelator}" Background="{DynamicResource BrushAntemWhite}" BorderThickness="2" Margin="308,81,0,64" HorizontalAlignment="Left" Width="292">
             <ScrollViewer Grid.Row="1" VerticalScrollBarVisibility="Auto">
                 <StackPanel x:Name="groupXinput" HorizontalAlignment="Left" Margin="4,4,0,0" Width="280" Background="{DynamicResource BrushAntemWhite}"/>
             </ScrollViewer>
@@ -78,6 +78,7 @@
                     <MenuItem x:Name="menu_MsBluetooth" Header="Microsoft Bluetooth" Click="menu_MsBluetooth_Click"/>
                     <MenuItem x:Name="menu_SetDefaultCalibration" Visibility="Collapsed"
                Header="Set Default Calibration" Click="menu_SetDefaultCalibration_Click"/>
+                    <MenuItem x:Name="menu_Repo" Header="Open Github Repo" Click="menu_Github_Click"/>
                     <MenuItem x:Name="menu_version" Header="version 2.0" IsEnabled="False"/>
                 </ContextMenu>
             </Button.ContextMenu>
