@@ -190,6 +190,8 @@ namespace NintrollerLib
 
 #if DEBUG
             DebugLastData = new byte[] { 0 };
+
+            DebugMidiPacketReadLog = new Queue<string>();
 #endif
 
             Joy.Calibrate(Calibrations.Defaults.GuitarDefault.Joy);
