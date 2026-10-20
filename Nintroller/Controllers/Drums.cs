@@ -209,7 +209,7 @@ namespace NintrollerLib
             set { Minus = value; }
         }
         
-        private const float GTR_JOY_DIGITAL_THRESH = 0.5f;
+        private const float GTR_JOY_DIGITAL_THRESH = 0.8f;
 
         private static float _MapRange(float s, float a1, float a2, float b1, float b2)
         {

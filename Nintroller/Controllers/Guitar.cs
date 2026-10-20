@@ -172,7 +172,7 @@ namespace NintrollerLib
         private const byte GTR_TOUCH_STRIP_BlueToOrange5 = 0x1E;
         private const byte GTR_TOUCH_STRIP_Orange = 0x1F;
 
-        private const float GTR_JOY_DIGITAL_THRESH = 0.5f;
+        private const float GTR_JOY_DIGITAL_THRESH = 0.8f;
 
         //private const byte GTR_WHAMMY_MIN = 0x10;
         //private const byte GTR_WHAMMY_MAX = 0x1B;
