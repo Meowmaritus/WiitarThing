@@ -524,10 +524,11 @@ namespace NintrollerLib
             else if (wiimote.buttons.Down)
                 Right = true;
 
+            // These are opposite of how guitar is because the Wii remote slots in the opposite way around.
             if (wiimote.buttons.Right)
-                Down = true;
-            else if (wiimote.buttons.Left)
                 Up = true;
+            else if (wiimote.buttons.Left)
+                Down = true;
 
             // A on the actual wiimote
             if (SpecialButtonSelect)
