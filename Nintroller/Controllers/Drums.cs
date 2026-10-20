@@ -89,7 +89,10 @@ namespace NintrollerLib
         public const int MidiNoteO = 49;
         public const int MidiNoteBass = 36;
 
-        private Stopwatch drumSustainStopwatch;
+        private Stopwatch deltaTimeStopwatch;
+        public long SnapbackFilterTicks;
+        public DigitalJoySnapbackFilter SnapbackFilterJoyX;
+        public DigitalJoySnapbackFilter SnapbackFilterJoyY;
 
         public InputHitSustainer HitSustainerG;
         public InputHitSustainer HitSustainerR;
@@ -97,9 +100,6 @@ namespace NintrollerLib
         public InputHitSustainer HitSustainerB;
         public InputHitSustainer HitSustainerO;
         public InputHitSustainer HitSustainerBass;
-
-
-
 
         // Each drum hit will sustain a button output value of true for this many ticks.
         public long HitSustainTicks;
@@ -163,10 +163,14 @@ namespace NintrollerLib
             HitSustainerO = new InputHitSustainer();
             HitSustainerBass = new InputHitSustainer();
 
-            drumSustainStopwatch = Stopwatch.StartNew();
+            SnapbackFilterJoyX = new DigitalJoySnapbackFilter();
+            SnapbackFilterJoyY = new DigitalJoySnapbackFilter();
+
+            deltaTimeStopwatch = Stopwatch.StartNew();
 
             // These configuration fields hardcoded for now.
             // TODO: Add way to configure from GUI.
+            SnapbackFilterTicks = 50 * TimeSpan.TicksPerMillisecond;
             ReadAsMIDI = true;
             HitSustainTicks = TimeSpan.TicksPerMillisecond * 24; // about 42 NPS
             HitReleaseTicks = TimeSpan.TicksPerMillisecond * 6;
@@ -251,8 +255,8 @@ namespace NintrollerLib
                     return;
             }
 
-            long elapsedTicks = drumSustainStopwatch.ElapsedTicks;
-            drumSustainStopwatch.Restart();
+            long elapsedTicks = deltaTimeStopwatch.ElapsedTicks;
+            deltaTimeStopwatch.Restart();
 
             if (PadHitCooldown1 > 0)
                 PadHitCooldown1 -= elapsedTicks;
@@ -367,14 +371,8 @@ namespace NintrollerLib
                 Minus = (data[offset + 4] & 0x10) == 0;
                 //Home = (data[offset + 4] & 0x08) == 0;
 
-                // Dpad
-                Up = (data[offset + 5] & 0x01) == 0;
-                Down = (data[offset + 4] & 0x40) == 0;
-                //Left = (data[offset + 5] & 0x02) == 0;
-                //Right = (data[offset + 4] & 0x80) == 0;
-
-                //Up = false;
-                //Down = false;
+                Up = false;
+                Down = false;
                 Left = false;
                 Right = false;
 
@@ -477,10 +475,11 @@ namespace NintrollerLib
                                     break;
                             }
                         }
-
-
                     }
                 }
+
+                SnapbackFilterJoyX.Update(elapsedTicks, SnapbackFilterTicks, ref Left, ref Right);
+                SnapbackFilterJoyY.Update(elapsedTicks, SnapbackFilterTicks, ref Up, ref Down);
 
             }
 

@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Linq;
 using System.Text;
 using System.Windows;
@@ -85,6 +86,11 @@ namespace NintrollerLib
         private byte CALIB_Whammy_Min;
         private byte CALIB_Whammy_Max;
 
+        private Stopwatch deltaTimeStopwatch;
+        public long SnapbackFilterTicks;
+        public DigitalJoySnapbackFilter SnapbackFilterJoyX;
+        public DigitalJoySnapbackFilter SnapbackFilterJoyY;
+
         public Guitar(Wiimote wm)
         {
             this = new Guitar();
@@ -104,6 +110,11 @@ namespace NintrollerLib
             CALIB_Tilt_Neutral = 0;
             CALIB_Tilt_Tilted = (float)(Math.PI / 2);
             CALIB_Tilt_Weight = 0.35f;
+
+            SnapbackFilterJoyX = new DigitalJoySnapbackFilter();
+            SnapbackFilterJoyY = new DigitalJoySnapbackFilter();
+
+            deltaTimeStopwatch = Stopwatch.StartNew();
 
 #if DEBUG
             DebugLastData = new byte[] { 0 };
@@ -207,6 +218,9 @@ namespace NintrollerLib
                     return;
             }
 
+            long elapsedTicks = deltaTimeStopwatch.ElapsedTicks;
+            deltaTimeStopwatch.Restart();
+
             if (offset > 0)
             {
                 if (!IsGH3SetYet)
@@ -235,13 +249,13 @@ namespace NintrollerLib
                 //Home = (data[offset + 4] & 0x08) == 0;
 
                 // Dpad
-                Up = (data[offset + 5] & 0x01) == 0;
-                Down = (data[offset + 4] & 0x40) == 0;
+                bool strumUp = (data[offset + 5] & 0x01) == 0;
+                bool strumDown = (data[offset + 4] & 0x40) == 0;
                 //Left = (data[offset + 5] & 0x02) == 0;
                 //Right = (data[offset + 4] & 0x80) == 0;
 
-                //Up = false;
-                //Down = false;
+                Up = false;
+                Down = false;
                 Left = false;
                 Right = false;
 
@@ -349,7 +363,8 @@ namespace NintrollerLib
                     }
                 }
 
-
+                SnapbackFilterJoyX.Update(elapsedTicks, SnapbackFilterTicks, ref Left, ref Right);
+                SnapbackFilterJoyY.Update(elapsedTicks, SnapbackFilterTicks, ref Up, ref Down);
 
                 if ((!IsGH3) && CALIB_Enable_TouchStrip)
                 {
@@ -453,6 +468,11 @@ namespace NintrollerLib
 
                 //Console.WriteLine();
 
+                // Registering this after the joystick stuff now so it doesn't get processed by snapback filter.
+                if (strumUp)
+                    Up = true;
+                if (strumDown)
+                    Down = true;
 
             }
 
