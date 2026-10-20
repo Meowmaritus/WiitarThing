@@ -40,11 +40,8 @@ namespace WiitarThing.Windows
 
             if (!Cancelled)
             {
-                if (e.state is Guitar)
+                if (e.state is Guitar gtr)
                 {
-                    var gtr = new Guitar();
-                    gtr = (Guitar)e.state;
-
                     sb.Clear();
 
                     for (int i = 0; i < gtr.DebugLastData.Length; i++)
@@ -56,12 +53,21 @@ namespace WiitarThing.Windows
                     Prompt(sb.ToString(), isBold: true, isItalic: false, isSmall: false, isDebug: false);
 
                     //System.Threading.Thread.Sleep(16);
-                } 
-                else if (e.state is Turntable)
+                }
+                else if (e.state is Drums drm)
                 {
-                    var ttb = new Turntable();
-                    ttb = (Turntable)e.state;
+                    sb.Clear();
 
+                    for (int i = 0; i < drm.DebugLastData.Length; i++)
+                    {
+                        sb.Append(drm.DebugLastData[i].ToString("X2"));
+                        sb.Append(" ");
+                    }
+
+                    Prompt(sb.ToString(), isBold: true, isItalic: false, isSmall: false, isDebug: false);
+                }
+                else if (e.state is Turntable ttb)
+                {
                     sb.Clear();
 
                     for (int i = 0; i < ttb.DebugLastData.Length; i++)
