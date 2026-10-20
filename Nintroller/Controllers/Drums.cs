@@ -483,6 +483,34 @@ namespace NintrollerLib
 
             }
 
+
+            MidiG = HitSustainerG.Update(elapsedTicks, HitSustainTicks, HitReleaseTicks);
+            MidiR = HitSustainerR.Update(elapsedTicks, HitSustainTicks, HitReleaseTicks);
+            MidiY = HitSustainerY.Update(elapsedTicks, HitSustainTicks, HitReleaseTicks);
+            MidiB = HitSustainerB.Update(elapsedTicks, HitSustainTicks, HitReleaseTicks);
+            MidiO = HitSustainerO.Update(elapsedTicks, HitSustainTicks, HitReleaseTicks);
+            MidiBass = HitSustainerBass.Update(elapsedTicks, HitSustainTicks, HitReleaseTicks);
+
+            if (ReadAsMIDI)
+            {
+                G = MidiG;
+                R = MidiR;
+                Y = MidiY;
+                B = MidiB;
+                O = MidiO;
+                Bass = MidiBass;
+            }
+            else
+            {
+                G = ButtonG;
+                R = ButtonR;
+                Y = ButtonY;
+                B = ButtonB;
+                O = ButtonO;
+                Bass = ButtonBass;
+            }
+
+
 #if LOW_BANDWIDTH
 
 #else
