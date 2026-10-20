@@ -51,8 +51,6 @@ namespace WiitarThing.Windows
                     }
 
                     Prompt(sb.ToString(), isBold: true, isItalic: false, isSmall: false, isDebug: false);
-
-                    //System.Threading.Thread.Sleep(16);
                 }
                 else if (e.state is Drums drm)
                 {
@@ -62,6 +60,11 @@ namespace WiitarThing.Windows
                     {
                         sb.Append(drm.DebugLastData[i].ToString("X2"));
                         sb.Append(" ");
+                    }
+
+                    foreach (var s in drm.DebugMidiPacketReadLog)
+                    {
+                        sb.AppendLine(s);
                     }
 
                     Prompt(sb.ToString(), isBold: true, isItalic: false, isSmall: false, isDebug: false);
@@ -119,8 +122,6 @@ namespace WiitarThing.Windows
                     sb.Append("\n");
 
                     Prompt(sb.ToString(), isBold: true, isItalic: false, isSmall: false, isDebug: false);
-
-                    //System.Threading.Thread.Sleep(16);
                 }
             }
 #endif

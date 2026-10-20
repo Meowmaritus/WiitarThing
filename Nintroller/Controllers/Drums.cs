@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Linq;
 using System.Text;
 using System.Windows;
@@ -31,10 +32,6 @@ namespace NintrollerLib
         }
 
         private bool SpecialButtonSelect => wiimote.buttons.A;
-        private bool SpecialButtonTiltCalibMin => wiimote.buttons.One;
-        private bool SpecialButtonTiltCalibMax => wiimote.buttons.Two;
-        private bool SpecialButtonTouchOn => wiimote.buttons.Plus;
-        private bool SpecialButtonTouchOff => wiimote.buttons.Minus;
         private bool SpecialButtonDebugDump => wiimote.buttons.Home;
 
 #if DEBUG
@@ -58,18 +55,134 @@ namespace NintrollerLib
         public bool Up, Down, Left, Right;
         public bool Plus, Minus;
 
-#if DEBUG
-        public byte[] DebugLastData;
-#endif
+        // Whether to read the drums as MIDI rather than buttons.
+        // MIDI will probably work better for fast hits due to the button data's built-in very long debounce.
+        public bool ReadAsMIDI;
+
+        // The drum pad values the controller reports as buttons (fast hits can get ignored)
+        public bool ButtonG;
+        public bool ButtonR;
+        public bool ButtonY;
+        public bool ButtonB;
+        public bool ButtonO;
+        public bool ButtonBass;
+
+        // The drum pad values the controller reports as MIDI (processed / debounced / etc)
+        public bool MidiG;
+        public bool MidiR;
+        public bool MidiY;
+        public bool MidiB;
+        public bool MidiO;
+        public bool MidiBass;
+
+        public long PadHitCooldown1;
+        public long PadHitCooldown2;
+
+        // The cooldown upon hitting each pad that prevents "third hand" pad ghost hits from happening on dodgy kits.
+        public long PadHitCooldownMax;
+
+        // MIDI note IDs - TODO: check if these would ever be wrong for any drumkit?
+        public const int MidiNoteG = 45;
+        public const int MidiNoteR = 38;
+        public const int MidiNoteY = 46;
+        public const int MidiNoteB = 48;
+        public const int MidiNoteO = 49;
+        public const int MidiNoteBass = 36;
+
+        private Stopwatch drumSustainStopwatch;
+
+        public InputHitSustainer HitSustainerG;
+        public InputHitSustainer HitSustainerR;
+        public InputHitSustainer HitSustainerY;
+        public InputHitSustainer HitSustainerB;
+        public InputHitSustainer HitSustainerO;
+        public InputHitSustainer HitSustainerBass;
+
+
+
+
+        // Each drum hit will sustain a button output value of true for this many ticks.
+        public long HitSustainTicks;
+
+        // Minimum number of ticks to wait between outputting each drum hit.
+        public long HitReleaseTicks;
+
+        // Minimum MIDI velocity required for hits to register.
+        public int MinVelocityG;
+        public int MinVelocityR;
+        public int MinVelocityY;
+        public int MinVelocityB;
+        public int MinVelocityO;
+        public int MinVelocityBass;
+
+        // Whether to ignore hits while the current hit is sustained.
+        public bool DropBouncesG;
+        public bool DropBouncesR;
+        public bool DropBouncesY;
+        public bool DropBouncesB;
+        public bool DropBouncesO;
+        public bool DropBouncesBass;
+
+
 
 #if DEBUG
+        public byte[] DebugLastData;
+
         private bool DebugButton_Dump;
+
+
+
+        public Queue<string> DebugMidiPacketReadLog;
+        const int DebugMidiPacketReadLogMaxCount = 20;
+        public int DebugMidiPacketReadIndex;
+
+        public int DebugLastMidiNote;
+        public int DebugLastMidiVelocity;
+        public int DebugLastMidiChannel;
+
+        public int DebugTimerValue;
+
+        public bool DebugLastButtonG;
+        public bool DebugLastButtonR;
+        public bool DebugLastButtonY;
+        public bool DebugLastButtonB;
+        public bool DebugLastButtonO;
+        public bool DebugLastButtonBass;
+
 #endif
 
         public Drums(Wiimote wm)
         {
             this = new Drums();
             wiimote = wm;
+
+            HitSustainerG = new InputHitSustainer();
+            HitSustainerR = new InputHitSustainer();
+            HitSustainerY = new InputHitSustainer();
+            HitSustainerB = new InputHitSustainer();
+            HitSustainerO = new InputHitSustainer();
+            HitSustainerBass = new InputHitSustainer();
+
+            drumSustainStopwatch = Stopwatch.StartNew();
+
+            // These configuration fields hardcoded for now.
+            // TODO: Add way to configure from GUI.
+            ReadAsMIDI = true;
+            HitSustainTicks = TimeSpan.TicksPerMillisecond * 24; // about 42 NPS
+            HitReleaseTicks = TimeSpan.TicksPerMillisecond * 6;
+            PadHitCooldownMax = 30 * TimeSpan.TicksPerMillisecond;
+            MinVelocityG = 0;
+            MinVelocityR = 0;
+            MinVelocityY = 0;
+            MinVelocityB = 0;
+            MinVelocityO = 0;
+            MinVelocityBass = 0;
+            DropBouncesG = true;
+            DropBouncesR = true;
+            DropBouncesY = true;
+            DropBouncesB = true;
+            DropBouncesO = true;
+            DropBouncesBass = true;
 
 #if DEBUG
             DebugLastData = new byte[] { 0 };
@@ -97,16 +210,21 @@ namespace NintrollerLib
             return b1 + (s - a1) * (b2 - b1) / (a2 - a1);
         }
 
+
+#if DEBUG
+        private void DebugEnqueuePacketReadLog(string s)
+        {
+            if (DebugMidiPacketReadLog.Count >= DebugMidiPacketReadLogMaxCount)
+                DebugMidiPacketReadLog.Dequeue();
+            DebugMidiPacketReadLog.Enqueue($"[{DebugMidiPacketReadIndex}] {s}");
+
+            DebugMidiPacketReadIndex++;
+        }
+#endif
+
         public void Update(byte[] data)
         {
 #if DEBUG
-            //DebugLastData = new byte[data.Length];
-
-            //for (int i = 0; i < data.Length; i++)
-            //{
-            //    DebugLastData[i] = data[i];
-            //}
-
             DebugLastData = data;
 #endif
 
@@ -133,40 +251,116 @@ namespace NintrollerLib
                     return;
             }
 
+            long elapsedTicks = drumSustainStopwatch.ElapsedTicks;
+            drumSustainStopwatch.Restart();
+
+            if (PadHitCooldown1 > 0)
+                PadHitCooldown1 -= elapsedTicks;
+
+            if (PadHitCooldown2 > 0)
+                PadHitCooldown2 -= elapsedTicks;
+
             if (offset > 0)
             {
 
-                bool whichBit1 = (data[offset + 2] & 0x20) == 0;
-                bool whichBit2 = (data[offset + 2] & 0x10) == 0;
-                bool whichBit3 = (data[offset + 2] & 0x08) == 0;
-                bool whichBit4 = (data[offset + 2] & 0x04) == 0;
-                bool whichBit5 = (data[offset + 2] & 0x02) == 0;
-                
-                //Only registering when there is velocity information, if not the game doesn't recognize when you do fast inputs.
-                G = !whichBit1 && whichBit2 && whichBit3 && !whichBit4 && whichBit5;// && (data[offset + 5] & 0x10) == 0;
-                R = !whichBit1 && !whichBit2 && whichBit3 && whichBit4 && !whichBit5;// && (data[offset + 5] & 0x40) == 0;
-                Y = !whichBit1 && whichBit2 && whichBit3 && whichBit4 && !whichBit5;// && (data[offset + 5] & 0x20) == 0;
-                B = whichBit1 && !whichBit2 && !whichBit3 && !whichBit4 && !whichBit5;// && (data[offset + 5] & 0x08) == 0;
-                O = whichBit1 && !whichBit2 && !whichBit3 && !whichBit4 && whichBit5;// && (data[offset + 5] & 0x80) == 0;
-                Bass = !whichBit1 && !whichBit2 && whichBit3 && !whichBit4 && !whichBit5;// && (data[offset + 5] & 0x04) == 0;
-        
-                /*if(whichBit1 || whichBit2 || whichBit3 || whichBit4 || whichBit5) {         
-                  Console.WriteLine("RAW: "
-                    + (!whichBit1 && !whichBit2 && whichBit3 && whichBit4 && !whichBit5 ? "R" : "")
-                    + (!whichBit1 && whichBit2 && whichBit3 && whichBit4 && !whichBit5 ? "Y" : "")
-                    + (whichBit1 && !whichBit2 && !whichBit3 && !whichBit4 && !whichBit5 ? "B" : "")
-                    + (whichBit1 && !whichBit2 && !whichBit3 && !whichBit4 && whichBit5 ? "O" : "")
-                    + (!whichBit1 && whichBit2 && whichBit3 && !whichBit4 && whichBit5 ? "G" : "")
-                    + (!whichBit1 && !whichBit2 && whichBit3 && !whichBit4 && !whichBit5 ? "BASS" : "")
+                int midiNote = (((data[offset + 2] >> 1) & 0x7F)) ^ 0b1111111;
 
-                    //Softness are 3 bits which contains a number from 0 - 7 including the force of the hit.
-                    //0 is max force, and 7 is no hit at all.
-                    + " | Softness: "
-                    + ((data[offset + 3] & 0x80) == 0)
-                    + "." + ((data[offset + 3] & 0x40) == 0)
-                    + "." + ((data[offset + 3] & 0x20) == 0)
-                  );
-                }*/
+                int midiVelocityBit3 = (data[offset + 2] & 1) << 3;
+                int midiVelocityBit4to6 = (data[offset + 3] >> 1) & 0b01110000;
+                int midiVelocityBit2 = (data[offset + 3] & 1) << 2;
+                int midiVelocityBit1 = (data[offset + 4] & (1 << 7)) >> 6;
+                int midiVelocityBit0 = data[offset + 4] & 1;
+
+                int midiVelocity = (midiVelocityBit0 | midiVelocityBit1 | midiVelocityBit2 | midiVelocityBit3 | midiVelocityBit4to6) ^ 0b1111111;
+
+                int midiChannel = (((data[offset + 3] >> 1) & 0b1111) ^ 0b1111) + 1;
+
+
+                bool canPadHit = PadHitCooldown1 <= 0 || PadHitCooldown2 <= 0;
+                bool padHit = false;
+
+                ButtonG = (data[offset + 5] & (1 << 4)) == 0;
+                ButtonR = (data[offset + 5] & (1 << 6)) == 0;
+                ButtonY = (data[offset + 5] & (1 << 5)) == 0;
+                ButtonB = (data[offset + 5] & (1 << 3)) == 0;
+                ButtonO = (data[offset + 5] & (1 << 7)) == 0;
+                ButtonBass = (data[offset + 5] & (1 << 2)) == 0;
+
+                if (midiNote == MidiNoteG && midiVelocity >= MinVelocityG && canPadHit)
+                {
+                    HitSustainerG.QueueHit(DropBouncesG);
+                    padHit = true;
+                }
+
+                if (midiNote == MidiNoteR && midiVelocity >= MinVelocityR && canPadHit)
+                {
+                    HitSustainerR.QueueHit(DropBouncesR);
+                    padHit = true;
+                }
+
+                if (midiNote == MidiNoteY && midiVelocity >= MinVelocityY && canPadHit)
+                {
+                    HitSustainerY.QueueHit(DropBouncesY);
+                    padHit = true;
+                }
+
+                if (midiNote == MidiNoteB && midiVelocity >= MinVelocityB && canPadHit)
+                {
+                    HitSustainerB.QueueHit(DropBouncesB);
+                    padHit = true;
+                }
+
+                if (midiNote == MidiNoteO && midiVelocity >= MinVelocityO && canPadHit)
+                {
+                    HitSustainerO.QueueHit(DropBouncesO);
+                    padHit = true;
+                }
+
+                if (padHit)
+                {
+                    if (PadHitCooldown1 <= 0)
+                        PadHitCooldown1 = PadHitCooldownMax;
+                    else if (PadHitCooldown2 <= 0)
+                        PadHitCooldown2 = PadHitCooldownMax;
+                }
+
+                if (midiNote == MidiNoteBass && midiVelocity >= MinVelocityBass)
+                    HitSustainerBass.QueueHit(DropBouncesBass);
+#if DEBUG
+
+
+                if (midiNote != DebugLastMidiNote || midiVelocity != DebugLastMidiVelocity || midiChannel != DebugLastMidiChannel)
+                {
+                    DebugEnqueuePacketReadLog($"MIDI <Note: {midiNote} | Velocity: {midiVelocity} | Channel: {midiChannel}>");
+                }
+
+                if (ButtonG != DebugLastButtonG || ButtonR != DebugLastButtonR || ButtonY != DebugLastButtonY ||
+                    ButtonB != DebugLastButtonB || ButtonO != DebugLastButtonO || ButtonBass != DebugLastButtonBass)
+                {
+                    string buttonsString = "Button <"
+                        + (ButtonG ? "G" : "-")
+                        + (ButtonR ? "R" : "-")
+                        + (ButtonY ? "Y" : "-")
+                        + (ButtonB ? "B" : "-")
+                        + (ButtonO ? "O" : "-")
+                        + (ButtonBass ? "P" : "-")
+                        + $"> Cooldowns <{PadHitCooldown1:0000} {PadHitCooldown2:0000}>";
+                    DebugEnqueuePacketReadLog(buttonsString);
+                }
+
+                DebugLastButtonG = ButtonG;
+                DebugLastButtonR = ButtonR;
+                DebugLastButtonY = ButtonY;
+                DebugLastButtonB = ButtonB;
+                DebugLastButtonO = ButtonO;
+                DebugLastButtonBass = ButtonBass;
+
+
+
+                DebugLastMidiNote = midiNote;
+                DebugLastMidiVelocity = midiVelocity;
+                DebugLastMidiChannel = midiChannel;
+#endif
 
                 //ZR = (data[offset + 5] & 0x04) == 0;
                 Plus = (data[offset + 4] & 0x04) == 0;
