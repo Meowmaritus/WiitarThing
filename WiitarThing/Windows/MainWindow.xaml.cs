@@ -561,7 +561,7 @@ namespace WiitarThing
 
         private void menu_Github_Click(object sender, RoutedEventArgs e)
         {
-            Process.Start("https://github.com/TheNathannator/WiitarThing");
+            Process.Start("https://github.com/Meowmaritus/WiitarThing");
         }
 
         #region Shortcut Creation
