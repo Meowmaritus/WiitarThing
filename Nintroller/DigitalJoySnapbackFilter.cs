@@ -25,6 +25,7 @@ namespace NintrollerLib
 
         public void Update(long deltaTicks, long filterDurationTicks, ref bool inputA, ref bool inputB)
         {
+            StateElapsedTime += deltaTicks;
             switch (State)
             {
                 case States.Wait:
@@ -44,12 +45,20 @@ namespace NintrollerLib
 
                 case States.OutputtingA:
                     inputB = false;
+                    // Continually restart snapback filter so it's ready to prevent snapback when input is released.
+                    if (inputA)
+                        StateElapsedTime = 0;
+                    // If snapback filter period is over, go back to waiting.
                     if (StateElapsedTime >= filterDurationTicks)
                         SwitchState(States.Wait);
                     break;
 
                 case States.OutputtingB:
                     inputA = false;
+                    // Continually restart snapback filter so it's ready to prevent snapback when input is released.
+                    if (inputB)
+                        StateElapsedTime = 0;
+                    // If snapback filter period is over, go back to waiting.
                     if (StateElapsedTime >= filterDurationTicks)
                         SwitchState(States.Wait);
                     break;
