@@ -42,6 +42,10 @@ namespace NintrollerLib
         private byte               _battery                     = 0x00;
         private bool               _batteryLow                  = false;
         private bool               _led1, _led2, _led3, _led4;
+        private Stopwatch          deltaTimeStopwatch;
+        public long                SaveConfigTicksCounter       = 0;
+        // Amount of time that must elapse with no changes to config for config to save (to prevent repeated saves while calibrating etc)
+        const long                 SaveConfigInterval = 2000 * TimeSpan.TicksPerMillisecond;
 
         // Read/Writing Variables
         private HidDeviceStream  _stream;                    // Read and Write Stream
@@ -325,6 +329,7 @@ namespace NintrollerLib
         {
             _state = null; // overwrites the value given during declaration (new Wiimote())
             _stream = dataStream;
+            deltaTimeStopwatch = Stopwatch.StartNew();
         }
 
         /// <summary>
@@ -648,6 +653,11 @@ namespace NintrollerLib
 
         private void ParseReport(byte[] report)
         {
+            long deltaTimeTicks = deltaTimeStopwatch.ElapsedTicks;
+            if (SaveConfigTicksCounter > 0)
+                SaveConfigTicksCounter -= deltaTimeTicks;
+            deltaTimeStopwatch.Restart();
+
             InputReport input = (InputReport)report[0];
             bool error = (report[4] & 0x0F) == 0x03;
 
@@ -750,7 +760,7 @@ namespace NintrollerLib
                                 {
                                     _state.SetCalibration(_calibrations.WiimoteCalibration);
                                 }
-                                _state.Update(this, report);
+                                _state.Update(this, report, deltaTimeTicks);
 
                                 // and Fire Event
                                 //ExtensionChange(this, _currentType);
@@ -1361,7 +1371,7 @@ namespace NintrollerLib
                             }
                         }
 
-                        _state.Update(this, report);
+                        _state.Update(this, report, deltaTimeTicks);
                         var arg = new NintrollerStateEventArgs(_currentType, _state, BatteryLevel);
 
                         try
@@ -1741,6 +1751,7 @@ namespace NintrollerLib
         public void MarkConfigModified()
         {
             _configModified = true;
+            SaveConfigTicksCounter = SaveConfigInterval;
         }
 
         public void UnmarkConfigModified()

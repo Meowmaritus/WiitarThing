@@ -85,7 +85,7 @@ namespace NintrollerLib
             set { Minus = value; }
         }
 
-        public void Update(Nintroller device, byte[] data)
+        public void Update(Nintroller device, byte[] data, long elapsedTicks)
         {
             int offset = 0;
             switch ((InputReport)data[0])
@@ -142,7 +142,7 @@ namespace NintrollerLib
                 RJoy.Normalize();
             }
 
-            wiimote.Update(device, data);
+            wiimote.Update(device, data, elapsedTicks);
         }
 
         public float GetValue(string input)

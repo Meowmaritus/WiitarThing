@@ -82,7 +82,6 @@ namespace NintrollerLib
         public const int MidiNoteO = 49;
         public const int MidiNoteBass = 36;
 
-        private Stopwatch deltaTimeStopwatch;
         public DigitalJoySnapbackFilter SnapbackFilterJoyX;
         public DigitalJoySnapbackFilter SnapbackFilterJoyY;
 
@@ -136,8 +135,6 @@ namespace NintrollerLib
             SnapbackFilterJoyX = new DigitalJoySnapbackFilter();
             SnapbackFilterJoyY = new DigitalJoySnapbackFilter();
 
-            deltaTimeStopwatch = Stopwatch.StartNew();
-
 #if DEBUG
             DebugLastData = new byte[] { 0 };
 
@@ -179,7 +176,7 @@ namespace NintrollerLib
         }
 #endif
 
-        public void Update(Nintroller device, byte[] data)
+        public void Update(Nintroller device, byte[] data, long elapsedTicks)
         {
 #if DEBUG
             DebugLastData = data;
@@ -207,9 +204,6 @@ namespace NintrollerLib
                 default:
                     return;
             }
-
-            long elapsedTicks = deltaTimeStopwatch.ElapsedTicks;
-            deltaTimeStopwatch.Restart();
 
             if (PadHitCooldown1 > 0)
                 PadHitCooldown1 -= elapsedTicks;
@@ -455,7 +449,7 @@ namespace NintrollerLib
 #if LOW_BANDWIDTH
 
 #else
-            wiimote.Update(device, data);
+            wiimote.Update(device, data, elapsedTicks);
 
             // Wiimote is sideways so these are weird
             if (wiimote.buttons.Up)

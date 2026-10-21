@@ -83,7 +83,7 @@ namespace NintrollerLib
         private bool DebugButton_Dump;
 #endif
 
-        private Stopwatch deltaTimeStopwatch;
+        
         
         public DigitalJoySnapbackFilter SnapbackFilterJoyX;
         public DigitalJoySnapbackFilter SnapbackFilterJoyY;
@@ -103,8 +103,6 @@ namespace NintrollerLib
 
             SnapbackFilterJoyX = new DigitalJoySnapbackFilter();
             SnapbackFilterJoyY = new DigitalJoySnapbackFilter();
-
-            deltaTimeStopwatch = Stopwatch.StartNew();
 
 #if DEBUG
             DebugLastData = new byte[] { 0 };
@@ -167,7 +165,7 @@ namespace NintrollerLib
             return b1 + (s - a1) * (b2 - b1) / (a2 - a1);
         }
 
-        public void Update(Nintroller device, byte[] data)
+        public void Update(Nintroller device, byte[] data, long elapsedTicks)
         {
 #if DEBUG
             //DebugLastData = new byte[data.Length];
@@ -202,9 +200,6 @@ namespace NintrollerLib
                 default:
                     return;
             }
-
-            long elapsedTicks = deltaTimeStopwatch.ElapsedTicks;
-            deltaTimeStopwatch.Restart();
 
             if (offset > 0)
             {
@@ -459,7 +454,7 @@ namespace NintrollerLib
 #if LOW_BANDWIDTH
 
 #else
-            wiimote.Update(device, data);
+            wiimote.Update(device, data, elapsedTicks);
 
             // Wiimote is sideways so these are weird
             if (wiimote.buttons.Up)

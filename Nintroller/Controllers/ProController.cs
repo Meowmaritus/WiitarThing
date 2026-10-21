@@ -83,7 +83,7 @@ namespace NintrollerLib
             set { Minus = value; }
         }
 
-        public void Update(Nintroller device, byte[] data)
+        public void Update(Nintroller device, byte[] data, long elapsedTicks)
         {
             int offset = 0;
 

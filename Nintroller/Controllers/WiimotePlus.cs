@@ -36,7 +36,7 @@ namespace NintrollerLib
         Wiimote wiimote;
         //gyro
 
-        public void Update(Nintroller device, byte[] data)
+        public void Update(Nintroller device, byte[] data, long elapsedTicks)
         {
             throw new NotImplementedException();
         }

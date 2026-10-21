@@ -6,7 +6,7 @@ namespace NintrollerLib
 {
     public interface INintrollerState : IEnumerable<KeyValuePair<string, float>>
     {
-        void Update(Nintroller device, byte[] data);
+        void Update(Nintroller device, byte[] data, long elapsedTicks);
         float GetValue(string input);
         void SetCalibration(Calibrations.CalibrationPreset preset);
         void SetCalibration(INintrollerState from);

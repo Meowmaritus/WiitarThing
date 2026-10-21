@@ -324,7 +324,7 @@ namespace WiitarThing
 
         void device_StateChange(object sender, NintrollerStateEventArgs e)
         {
-            if (device.IsConfigModified())
+            if (device.IsConfigModified() && device.SaveConfigTicksCounter <= 0)
             {
                 SaveControllerConfig();
                 UserPrefs.Instance.AddDevicePref(properties);
@@ -1096,6 +1096,7 @@ namespace WiitarThing
             {
                 ApplyCalibration(win.props.calPref, win.props.calString);
                 properties = new Property(win.props);
+                LoadLastUsedControllerConfig();
                 snapIRpointer = properties.pointerMode != Property.PointerOffScreenMode.Center;
                 SetName(properties.name);
                 UserPrefs.Instance.AddDevicePref(properties);

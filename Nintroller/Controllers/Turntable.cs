@@ -116,7 +116,7 @@ namespace NintrollerLib
             set { Minus = value; }
         }
 
-        public void Update(Nintroller device, byte[] data)
+        public void Update(Nintroller device, byte[] data, long elapsedTicks)
         {
 #if DEBUG
             //DebugLastData = new byte[data.Length];
@@ -224,7 +224,7 @@ namespace NintrollerLib
                 Crossfader.Normalize();
             }
 
-            wiimote.Update(device, data);
+            wiimote.Update(device, data, elapsedTicks);
 
 #if DEBUG
             if (offset > 0)

@@ -89,10 +89,10 @@ namespace NintrollerLib
             _debugViewActive = false;
 #endif
 
-            Update(null, rawData);
+            Update(null, rawData, 0);
         }
 
-        public void Update(Nintroller device, byte[] data)
+        public void Update(Nintroller device, byte[] data, long elapsedTicks)
         {
             buttons.Parse(data, 1);
             accelerometer.Parse(data, 3);

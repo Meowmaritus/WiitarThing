@@ -85,10 +85,10 @@ namespace NintrollerLib
             _debugViewActive = false;
 #endif
 
-            Update(null, rawData);
+            Update(null, rawData, 0);
         }
 
-        public void Update(Nintroller device, byte[] data)
+        public void Update(Nintroller device, byte[] data, long elapsedTicks)
         {
             int offset = 0;
             switch((InputReport)data[0])
@@ -134,7 +134,7 @@ namespace NintrollerLib
                 accelerometer.Normalize();
             }
 
-            wiimote.Update(device, data);
+            wiimote.Update(device, data, elapsedTicks);
         }
 
         public float GetValue(string input)
