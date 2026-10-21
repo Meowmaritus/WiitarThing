@@ -102,6 +102,7 @@ namespace WiitarThing
         public bool toshibaMode;
         public bool autoRefresh = true;
 
+
         public UserPrefs()
         { }
 
@@ -274,12 +275,26 @@ namespace WiitarThing
         public string calString = ""; // not the best solution for saving the custom config but makes it easy
         public PointerOffScreenMode pointerMode = PointerOffScreenMode.Center;
 
+
+        public NintrollerLib.ControllerConfig.GuitarConfig LastUsedGuitarConfig;
+        public NintrollerLib.ControllerConfig.DrumsConfig LastUsedDrumsConfig;
+        public NintrollerLib.ControllerConfig.TurntableConfig LastUsedTurntableConfig;
+
         public Property()
         {
             hid = "";
             connType = ProfHolderType.XInput;
             calPref = CalibrationPreference.Default;
             pointerMode = PointerOffScreenMode.Center;
+
+            LastUsedGuitarConfig = new NintrollerLib.ControllerConfig.GuitarConfig();
+            LastUsedGuitarConfig.InitDefaults();
+
+            LastUsedDrumsConfig = new NintrollerLib.ControllerConfig.DrumsConfig();
+            LastUsedDrumsConfig.InitDefaults();
+
+            LastUsedTurntableConfig = new NintrollerLib.ControllerConfig.TurntableConfig();
+            LastUsedTurntableConfig.InitDefaults();
         }
 
         public Property(string ID)
@@ -303,6 +318,10 @@ namespace WiitarThing
             calPref = copy.calPref;
             calString = copy.calString;
             pointerMode = copy.pointerMode;
+
+            LastUsedGuitarConfig = (NintrollerLib.ControllerConfig.GuitarConfig)copy.LastUsedGuitarConfig.GetClone();
+            LastUsedDrumsConfig = (NintrollerLib.ControllerConfig.DrumsConfig)copy.LastUsedDrumsConfig.GetClone();
+            LastUsedTurntableConfig = (NintrollerLib.ControllerConfig.TurntableConfig)copy.LastUsedTurntableConfig.GetClone();
         }
     }
 

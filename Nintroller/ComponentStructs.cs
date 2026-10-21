@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Linq;
+using static NintrollerLib.Calibrations;
 
 namespace NintrollerLib
 {
@@ -407,6 +408,22 @@ namespace NintrollerLib
                 value = (float)(rawValue - min) / (float)(max == 0 ? 31 : max - min);
             }
         }
+
+        public void AutoCalibrate(Nintroller device)
+        {
+            if (rawValue > max)
+            {
+                max = rawValue;
+                device.MarkConfigModified();
+            }
+            if (rawValue < min)
+            {
+                min = rawValue;
+                device.MarkConfigModified();
+            }
+
+            Normalize();
+        }
     }
 
     /// <summary>
@@ -480,6 +497,40 @@ namespace NintrollerLib
 
             antiDeadzone = calibration.antiDeadzone;
         }
+
+
+
+
+        public void AutoCalibrate(Nintroller device)
+        {
+            if (rawX > maxX)
+            {
+                maxX = rawX;
+                device.MarkConfigModified();
+            }
+            if (rawX < minX)
+            {
+                minX = rawX;
+                device.MarkConfigModified();
+            }
+
+
+            if (rawY > maxY)
+            {
+                maxY = rawY;
+                device.MarkConfigModified();
+            }
+            if (rawY < minY)
+            {
+                minY = rawY;
+                device.MarkConfigModified();
+            }
+
+
+            Normalize();
+        }
+
+
 
         /// <summary>
         /// Normalizes raw values to calculate X and Y

@@ -81,6 +81,9 @@ namespace NintrollerLib
         public bool Euphoria;
         public bool Plus, Minus;
 
+        public ControllerConfig.TurntableConfig Config;
+        public bool NeedsConfigLoad;
+
 #if DEBUG
         public byte[] DebugLastData;
 #endif
@@ -94,6 +97,8 @@ namespace NintrollerLib
             this = new Turntable();
             wiimote = wm;
 
+            Config = new ControllerConfig.TurntableConfig();
+            NeedsConfigLoad = true;
 #if DEBUG
             DebugLastData = new byte[] { 0 };
 #endif
@@ -111,7 +116,7 @@ namespace NintrollerLib
             set { Minus = value; }
         }
 
-        public void Update(byte[] data)
+        public void Update(Nintroller device, byte[] data)
         {
 #if DEBUG
             //DebugLastData = new byte[data.Length];
@@ -153,7 +158,9 @@ namespace NintrollerLib
                 // Joystick
                 Joy.rawX = (byte)(data[offset] & 0x3F);
                 Joy.rawY = (byte)(data[offset + 1] & 0x3F);
-                Joy.Normalize();
+                Joy.AutoCalibrate(device);
+
+                // TODO: See if the below .Normalize calls should be chaged to .AutoCalibrate or not
 
                 // Buttons
                 rawLButtons = (byte)(7 - (
@@ -217,7 +224,7 @@ namespace NintrollerLib
                 Crossfader.Normalize();
             }
 
-            wiimote.Update(data);
+            wiimote.Update(device, data);
 
 #if DEBUG
             if (offset > 0)
@@ -601,6 +608,38 @@ namespace NintrollerLib
         IEnumerator IEnumerable.GetEnumerator()
         {
             return GetEnumerator();
+        }
+
+
+        public void SetConfig(ControllerConfig.IControllerConfig config)
+        {
+            if (config is ControllerConfig.TurntableConfig turntableConfig)
+            {
+                Config = turntableConfig;
+                Joy.Calibrate(Config.JoyCalibration);
+                JoyTableLR.Calibrate(Config.JoyTableLRCalibration);
+                JoyDialCrossfade.Calibrate(Config.JoyDialCrossfadeCalibration);
+                Crossfader.Calibrate(Config.CrossfaderCalibration);
+                Dial.Calibrate(Config.DialCalibration);
+                LButtons.Calibrate(Config.LButtonsCalibration);
+                RButtons.Calibrate(Config.RButtonsCalibration);
+                NeedsConfigLoad = false;
+            }
+
+        }
+
+        public ControllerConfig.IControllerConfig GetConfig()
+        {
+            if (NeedsConfigLoad)
+                return null;
+            Config.JoyCalibration.Calibrate(Joy);
+            Config.JoyTableLRCalibration.Calibrate(JoyTableLR);
+            Config.JoyDialCrossfadeCalibration.Calibrate(JoyDialCrossfade);
+            Config.CrossfaderCalibration.Calibrate(Crossfader);
+            Config.DialCalibration.Calibrate(Dial);
+            Config.LButtonsCalibration.Calibrate(LButtons);
+            Config.RButtonsCalibration.Calibrate(RButtons);
+            return Config;
         }
     }
 }

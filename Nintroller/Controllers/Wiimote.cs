@@ -89,10 +89,10 @@ namespace NintrollerLib
             _debugViewActive = false;
 #endif
 
-            Update(rawData);
+            Update(null, rawData);
         }
 
-        public void Update(byte[] data)
+        public void Update(Nintroller device, byte[] data)
         {
             buttons.Parse(data, 1);
             accelerometer.Parse(data, 3);
@@ -356,6 +356,16 @@ namespace NintrollerLib
         IEnumerator IEnumerable.GetEnumerator()
         {
             return GetEnumerator();
+        }
+
+        public void SetConfig(ControllerConfig.IControllerConfig config)
+        {
+            
+        }
+
+        public ControllerConfig.IControllerConfig GetConfig()
+        {
+            return new ControllerConfig.EmptyConfig();
         }
     }
 }

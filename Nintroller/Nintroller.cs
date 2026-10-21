@@ -32,6 +32,7 @@ namespace NintrollerLib
         // General
         private bool               _connected                   = false;
         private INintrollerState   _state                       = new Wiimote();
+        private bool               _configModified              = false;
         private CalibrationStorage _calibrations                = new CalibrationStorage();
         private ControllerType     _currentType                 = ControllerType.Unknown;
         private ControllerType     _forceType                   = ControllerType.Unknown;
@@ -749,7 +750,7 @@ namespace NintrollerLib
                                 {
                                     _state.SetCalibration(_calibrations.WiimoteCalibration);
                                 }
-                                _state.Update(report);
+                                _state.Update(this, report);
 
                                 // and Fire Event
                                 //ExtensionChange(this, _currentType);
@@ -956,6 +957,7 @@ namespace NintrollerLib
                                         {
                                             _state.SetCalibration(_calibrations.ClassicProCalibration);
                                         }
+
 #if LOW_BANDWIDTH
                                         applyReport = InputReport.BtnsExt;
 #else
@@ -1359,7 +1361,7 @@ namespace NintrollerLib
                             }
                         }
 
-                        _state.Update(report);
+                        _state.Update(this, report);
                         var arg = new NintrollerStateEventArgs(_currentType, _state, BatteryLevel);
 
                         try
@@ -1724,6 +1726,31 @@ namespace NintrollerLib
         }
 
 #endregion
+    
+    
+        public void SetConfig(ControllerConfig.IControllerConfig config)
+        {
+            _state.SetConfig(config);
+        }
+
+        public ControllerConfig.IControllerConfig GetConfig()
+        {
+            return _state.GetConfig();
+        }
+
+        public void MarkConfigModified()
+        {
+            _configModified = true;
+        }
+
+        public void UnmarkConfigModified()
+        {
+            _configModified = false;
+        }
+
+        public bool IsConfigModified() => _configModified;
+    
+    
     }
 
 #region New Event Args

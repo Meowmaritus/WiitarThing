@@ -55,10 +55,6 @@ namespace NintrollerLib
         public bool Up, Down, Left, Right;
         public bool Plus, Minus;
 
-        // Whether to read the drums as MIDI rather than buttons.
-        // MIDI will probably work better for fast hits due to the button data's built-in very long debounce.
-        public bool ReadAsMIDI;
-
         // The drum pad values the controller reports as buttons (fast hits can get ignored)
         public bool ButtonG;
         public bool ButtonR;
@@ -78,9 +74,6 @@ namespace NintrollerLib
         public long PadHitCooldown1;
         public long PadHitCooldown2;
 
-        // The cooldown upon hitting each pad that prevents "third hand" pad ghost hits from happening on dodgy kits.
-        public long PadHitCooldownMax;
-
         // MIDI note IDs - TODO: check if these would ever be wrong for any drumkit?
         public const int MidiNoteG = 45;
         public const int MidiNoteR = 38;
@@ -90,7 +83,6 @@ namespace NintrollerLib
         public const int MidiNoteBass = 36;
 
         private Stopwatch deltaTimeStopwatch;
-        public long SnapbackFilterTicks;
         public DigitalJoySnapbackFilter SnapbackFilterJoyX;
         public DigitalJoySnapbackFilter SnapbackFilterJoyY;
 
@@ -101,36 +93,14 @@ namespace NintrollerLib
         public InputHitSustainer HitSustainerO;
         public InputHitSustainer HitSustainerBass;
 
-        // Each drum hit will sustain a button output value of true for this many ticks.
-        public long HitSustainTicks;
-
-        // Minimum number of ticks to wait between outputting each drum hit.
-        public long HitReleaseTicks;
-
-        // Minimum MIDI velocity required for hits to register.
-        public int MinVelocityG;
-        public int MinVelocityR;
-        public int MinVelocityY;
-        public int MinVelocityB;
-        public int MinVelocityO;
-        public int MinVelocityBass;
-
-        // Whether to ignore hits while the current hit is sustained.
-        public bool DropBouncesG;
-        public bool DropBouncesR;
-        public bool DropBouncesY;
-        public bool DropBouncesB;
-        public bool DropBouncesO;
-        public bool DropBouncesBass;
-
+        public ControllerConfig.DrumsConfig Config;
+        public bool NeedsConfigLoad;
 
 
 #if DEBUG
         public byte[] DebugLastData;
 
         private bool DebugButton_Dump;
-
-
 
         public Queue<string> DebugMidiPacketReadLog;
         const int DebugMidiPacketReadLogMaxCount = 20;
@@ -168,32 +138,13 @@ namespace NintrollerLib
 
             deltaTimeStopwatch = Stopwatch.StartNew();
 
-            // These configuration fields hardcoded for now.
-            // TODO: Add way to configure from GUI.
-            SnapbackFilterTicks = 50 * TimeSpan.TicksPerMillisecond;
-            ReadAsMIDI = true;
-            HitSustainTicks = TimeSpan.TicksPerMillisecond * 24; // about 42 NPS
-            HitReleaseTicks = TimeSpan.TicksPerMillisecond * 6;
-            PadHitCooldownMax = 30 * TimeSpan.TicksPerMillisecond;
-            MinVelocityG = 0;
-            MinVelocityR = 0;
-            MinVelocityY = 0;
-            MinVelocityB = 0;
-            MinVelocityO = 0;
-            MinVelocityBass = 0;
-            DropBouncesG = true;
-            DropBouncesR = true;
-            DropBouncesY = true;
-            DropBouncesB = true;
-            DropBouncesO = true;
-            DropBouncesBass = true;
-
 #if DEBUG
             DebugLastData = new byte[] { 0 };
 
             DebugMidiPacketReadLog = new Queue<string>();
 #endif
-
+            Config = new ControllerConfig.DrumsConfig();
+            NeedsConfigLoad = true;
             Joy.Calibrate(Calibrations.Defaults.GuitarDefault.Joy);
         }
 
@@ -228,7 +179,7 @@ namespace NintrollerLib
         }
 #endif
 
-        public void Update(byte[] data)
+        public void Update(Nintroller device, byte[] data)
         {
 #if DEBUG
             DebugLastData = data;
@@ -292,46 +243,46 @@ namespace NintrollerLib
                 ButtonO = (data[offset + 5] & (1 << 7)) == 0;
                 ButtonBass = (data[offset + 5] & (1 << 2)) == 0;
 
-                if (midiNote == MidiNoteG && midiVelocity >= MinVelocityG && canPadHit)
+                if (midiNote == MidiNoteG && midiVelocity >= Config.MinVelocityG && canPadHit)
                 {
-                    HitSustainerG.QueueHit(DropBouncesG);
+                    HitSustainerG.QueueHit(Config.DropBouncesG);
                     padHit = true;
                 }
 
-                if (midiNote == MidiNoteR && midiVelocity >= MinVelocityR && canPadHit)
+                if (midiNote == MidiNoteR && midiVelocity >= Config.MinVelocityR && canPadHit)
                 {
-                    HitSustainerR.QueueHit(DropBouncesR);
+                    HitSustainerR.QueueHit(Config.DropBouncesR);
                     padHit = true;
                 }
 
-                if (midiNote == MidiNoteY && midiVelocity >= MinVelocityY && canPadHit)
+                if (midiNote == MidiNoteY && midiVelocity >= Config.MinVelocityY && canPadHit)
                 {
-                    HitSustainerY.QueueHit(DropBouncesY);
+                    HitSustainerY.QueueHit(Config.DropBouncesY);
                     padHit = true;
                 }
 
-                if (midiNote == MidiNoteB && midiVelocity >= MinVelocityB && canPadHit)
+                if (midiNote == MidiNoteB && midiVelocity >= Config.MinVelocityB && canPadHit)
                 {
-                    HitSustainerB.QueueHit(DropBouncesB);
+                    HitSustainerB.QueueHit(Config.DropBouncesB);
                     padHit = true;
                 }
 
-                if (midiNote == MidiNoteO && midiVelocity >= MinVelocityO && canPadHit)
+                if (midiNote == MidiNoteO && midiVelocity >= Config.MinVelocityO && canPadHit)
                 {
-                    HitSustainerO.QueueHit(DropBouncesO);
+                    HitSustainerO.QueueHit(Config.DropBouncesO);
                     padHit = true;
                 }
 
                 if (padHit)
                 {
                     if (PadHitCooldown1 <= 0)
-                        PadHitCooldown1 = PadHitCooldownMax;
+                        PadHitCooldown1 = Config.PadHitCooldownMax;
                     else if (PadHitCooldown2 <= 0)
-                        PadHitCooldown2 = PadHitCooldownMax;
+                        PadHitCooldown2 = Config.PadHitCooldownMax;
                 }
 
-                if (midiNote == MidiNoteBass && midiVelocity >= MinVelocityBass)
-                    HitSustainerBass.QueueHit(DropBouncesBass);
+                if (midiNote == MidiNoteBass && midiVelocity >= Config.MinVelocityBass)
+                    HitSustainerBass.QueueHit(Config.DropBouncesBass);
 #if DEBUG
 
 
@@ -384,19 +335,7 @@ namespace NintrollerLib
                     Joy.rawX = (byte)(data[offset] & 0x3F);
                     Joy.rawY = (byte)(data[offset + 1] & 0x03F);
 
-                    if (Joy.rawX > Joy.maxX)
-                        Joy.maxX = Joy.rawX;
-                    else if (Joy.rawX < Joy.minX)
-                        Joy.minX = Joy.rawX;
-
-
-                    if (Joy.rawY > Joy.maxY)
-                        Joy.maxY = Joy.rawY;
-                    else if (Joy.rawY < Joy.minY)
-                        Joy.minY = Joy.rawY;
-
-
-                    Joy.Normalize();
+                    Joy.AutoCalibrate(device);
 
                     bool isJoyPressed = (((Joy.X * Joy.X) + (Joy.Y * Joy.Y)) >= (GTR_JOY_DIGITAL_THRESH * GTR_JOY_DIGITAL_THRESH));
                     double joyDirection = (int)((Math.Atan2(Joy.Y, Joy.X) + (Math.PI / 2)) / (Math.PI / 8));
@@ -480,20 +419,20 @@ namespace NintrollerLib
                     }
                 }
 
-                SnapbackFilterJoyX.Update(elapsedTicks, SnapbackFilterTicks, ref Left, ref Right);
-                SnapbackFilterJoyY.Update(elapsedTicks, SnapbackFilterTicks, ref Up, ref Down);
+                SnapbackFilterJoyX.Update(elapsedTicks, Config.SnapbackFilterTicks, ref Left, ref Right);
+                SnapbackFilterJoyY.Update(elapsedTicks, Config.SnapbackFilterTicks, ref Up, ref Down);
 
             }
 
 
-            MidiG = HitSustainerG.Update(elapsedTicks, HitSustainTicks, HitReleaseTicks);
-            MidiR = HitSustainerR.Update(elapsedTicks, HitSustainTicks, HitReleaseTicks);
-            MidiY = HitSustainerY.Update(elapsedTicks, HitSustainTicks, HitReleaseTicks);
-            MidiB = HitSustainerB.Update(elapsedTicks, HitSustainTicks, HitReleaseTicks);
-            MidiO = HitSustainerO.Update(elapsedTicks, HitSustainTicks, HitReleaseTicks);
-            MidiBass = HitSustainerBass.Update(elapsedTicks, HitSustainTicks, HitReleaseTicks);
+            MidiG = HitSustainerG.Update(elapsedTicks, Config.HitSustainTicks, Config.HitReleaseTicks);
+            MidiR = HitSustainerR.Update(elapsedTicks, Config.HitSustainTicks, Config.HitReleaseTicks);
+            MidiY = HitSustainerY.Update(elapsedTicks, Config.HitSustainTicks, Config.HitReleaseTicks);
+            MidiB = HitSustainerB.Update(elapsedTicks, Config.HitSustainTicks, Config.HitReleaseTicks);
+            MidiO = HitSustainerO.Update(elapsedTicks, Config.HitSustainTicks, Config.HitReleaseTicks);
+            MidiBass = HitSustainerBass.Update(elapsedTicks, Config.HitSustainTicks, Config.HitReleaseTicks);
 
-            if (ReadAsMIDI)
+            if (Config.ReadAsMIDI)
             {
                 G = MidiG;
                 R = MidiR;
@@ -516,7 +455,7 @@ namespace NintrollerLib
 #if LOW_BANDWIDTH
 
 #else
-            wiimote.Update(data);
+            wiimote.Update(device, data);
 
             // Wiimote is sideways so these are weird
             if (wiimote.buttons.Up)
@@ -735,6 +674,25 @@ namespace NintrollerLib
         IEnumerator IEnumerable.GetEnumerator()
         {
             return GetEnumerator();
+        }
+
+        public void SetConfig(ControllerConfig.IControllerConfig config)
+        {
+            if (config is ControllerConfig.DrumsConfig drumsConfig)
+            {
+                Config = drumsConfig;
+                Joy.Calibrate(Config.JoyCalibration);
+                NeedsConfigLoad = false;
+            }
+            
+        }
+
+        public ControllerConfig.IControllerConfig GetConfig()
+        {
+            if (NeedsConfigLoad)
+                return null;
+            Config.JoyCalibration.Calibrate(Joy);
+            return Config;
         }
     }
 }

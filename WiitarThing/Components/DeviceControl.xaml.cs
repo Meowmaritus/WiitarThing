@@ -187,6 +187,7 @@ namespace WiitarThing
             {
                 SetName(string.IsNullOrWhiteSpace(properties.name) ? device.Type.ToString() : properties.name);
                 ApplyCalibration(properties.calPref, properties.calString ?? "");
+                LoadLastUsedControllerConfig();
                 snapIRpointer = properties.pointerMode != Property.PointerOffScreenMode.Center;
                 if (!string.IsNullOrEmpty(properties.lastIcon))
                 {
@@ -209,6 +210,9 @@ namespace WiitarThing
 
         public void Detatch()
         {
+            SaveControllerConfig();
+            UserPrefs.Instance.AddDevicePref(properties);
+            UserPrefs.SavePrefs();
             device?.StopReading();
             holder?.Close();
             lowBatteryFired = false;
@@ -320,6 +324,14 @@ namespace WiitarThing
 
         void device_StateChange(object sender, NintrollerStateEventArgs e)
         {
+            if (device.IsConfigModified())
+            {
+                SaveControllerConfig();
+                UserPrefs.Instance.AddDevicePref(properties);
+                UserPrefs.SavePrefs();
+                device.UnmarkConfigModified();
+            }
+
             // Makes the timer wait
             if (updateTimer != null) updateTimer.Change(1000, UPDATE_SPEED);
 
@@ -823,6 +835,56 @@ namespace WiitarThing
                 default:
                     icon.Source = (ImageSource)Application.Current.Resources["WIcon"];
                     UserPrefs.Instance.UpdateDeviceIcon(devicePath, "WIcon");
+                    break;
+            }
+        }
+
+        private void LoadLastUsedControllerConfig()
+        {
+            switch (device.Type)
+            {
+                case ControllerType.Guitar:
+                    //if (properties.LastUsedGuitarConfig == null)
+                    //{
+                    //    properties.LastUsedGuitarConfig = new ControllerConfig.GuitarConfig();
+                    //    properties.LastUsedGuitarConfig.InitDefaults();
+                    //}
+                    device.SetConfig(properties.LastUsedGuitarConfig.GetClone());
+                    break;
+                case ControllerType.Drums:
+                    //if (properties.LastUsedDrumsConfig == null)
+                    //{
+                    //    properties.LastUsedDrumsConfig = new ControllerConfig.DrumsConfig();
+                    //    properties.LastUsedDrumsConfig.InitDefaults();
+                    //}
+                    device.SetConfig(properties.LastUsedDrumsConfig.GetClone());
+                    break;
+                case ControllerType.Turntable:
+                    //if (properties.LastUsedTurntableConfig == null)
+                    //{
+                    //    properties.LastUsedTurntableConfig = new ControllerConfig.TurntableConfig();
+                    //    properties.LastUsedTurntableConfig.InitDefaults();
+                    //}
+                    device.SetConfig(properties.LastUsedTurntableConfig.GetClone());
+                    break;
+            }
+        }
+
+        public void SaveControllerConfig()
+        {
+            var config = device?.GetConfig();
+            if (config == null)
+                return;
+            switch (device.Type)
+            {
+                case ControllerType.Guitar:
+                    properties.LastUsedGuitarConfig = (ControllerConfig.GuitarConfig)(config.GetClone());
+                    break;
+                case ControllerType.Drums:
+                    properties.LastUsedDrumsConfig = (ControllerConfig.DrumsConfig)(config.GetClone());
+                    break;
+                case ControllerType.Turntable:
+                    properties.LastUsedTurntableConfig = (ControllerConfig.TurntableConfig)(config.GetClone());
                     break;
             }
         }

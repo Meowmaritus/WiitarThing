@@ -91,7 +91,7 @@ namespace NintrollerLib
             set { Minus = value; }
         }
 
-        public void Update(byte[] data)
+        public void Update(Nintroller device, byte[] data)
         {
             int offset = 0;
             switch ((InputReport)data[0])
@@ -156,7 +156,7 @@ namespace NintrollerLib
                 R.Normalize();
             }
 
-            wiimote.Update(data);
+            wiimote.Update(device, data);
         }
 
         public float GetValue(string input)
@@ -418,6 +418,16 @@ namespace NintrollerLib
         IEnumerator IEnumerable.GetEnumerator()
         {
             return GetEnumerator();
+        }
+
+        public void SetConfig(ControllerConfig.IControllerConfig config)
+        {
+
+        }
+
+        public ControllerConfig.IControllerConfig GetConfig()
+        {
+            return new ControllerConfig.EmptyConfig();
         }
     }
 }

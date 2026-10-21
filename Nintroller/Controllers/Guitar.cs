@@ -83,33 +83,23 @@ namespace NintrollerLib
         private bool DebugButton_Dump;
 #endif
 
-        private byte CALIB_Whammy_Min;
-        private byte CALIB_Whammy_Max;
-
         private Stopwatch deltaTimeStopwatch;
-        public long SnapbackFilterTicks;
+        
         public DigitalJoySnapbackFilter SnapbackFilterJoyX;
         public DigitalJoySnapbackFilter SnapbackFilterJoyY;
+
+
 
         public Guitar(Wiimote wm)
         {
             this = new Guitar();
             wiimote = wm;
 
-            CALIB_Whammy_Min = 0xFF;
-            CALIB_Whammy_Max = 0;
-
-            CALIB_Enable_TouchStrip = false;
-
             oldTouchStripValue = GTR_TOUCH_STRIP_None;
             oldTilt = 0;
 
             IsGH3SetYet = false;
             IsGH3 = false;
-
-            CALIB_Tilt_Neutral = 0;
-            CALIB_Tilt_Tilted = (float)(Math.PI / 2);
-            CALIB_Tilt_Weight = 0.35f;
 
             SnapbackFilterJoyX = new DigitalJoySnapbackFilter();
             SnapbackFilterJoyY = new DigitalJoySnapbackFilter();
@@ -119,7 +109,8 @@ namespace NintrollerLib
 #if DEBUG
             DebugLastData = new byte[] { 0 };
 #endif
-
+            Config = new ControllerConfig.GuitarConfig();
+            NeedsConfigLoad = true;
             Joy.Calibrate(Calibrations.Defaults.GuitarDefault.Joy);
         }
 
@@ -135,12 +126,8 @@ namespace NintrollerLib
             set { Minus = value; }
         }
 
-        public bool CALIB_Enable_TouchStrip;
-
-        public float CALIB_Tilt_Neutral;
-        public float CALIB_Tilt_Weight;
-        public float CALIB_Tilt_Tilted;
-        public float CALIB_Tilt_StartingZ;
+        public ControllerConfig.GuitarConfig Config;
+        public bool NeedsConfigLoad;
 
         private const byte GTR_TOUCH_STRIP_None = 0x0F;
         private const byte GTR_TOUCH_STRIP_Green = 0x04;
@@ -172,8 +159,6 @@ namespace NintrollerLib
         private const byte GTR_TOUCH_STRIP_BlueToOrange5 = 0x1E;
         private const byte GTR_TOUCH_STRIP_Orange = 0x1F;
 
-        private const float GTR_JOY_DIGITAL_THRESH = 0.8f;
-
         //private const byte GTR_WHAMMY_MIN = 0x10;
         //private const byte GTR_WHAMMY_MAX = 0x1B;
 
@@ -182,7 +167,7 @@ namespace NintrollerLib
             return b1 + (s - a1) * (b2 - b1) / (a2 - a1);
         }
 
-        public void Update(byte[] data)
+        public void Update(Nintroller device, byte[] data)
         {
 #if DEBUG
             //DebugLastData = new byte[data.Length];
@@ -265,21 +250,10 @@ namespace NintrollerLib
                     Joy.rawX = (byte)(data[offset] & 0x3F);
                     Joy.rawY = (byte)(data[offset + 1] & 0x03F);
 
-                    if (Joy.rawX > Joy.maxX)
-                        Joy.maxX = Joy.rawX;
-                    else if (Joy.rawX < Joy.minX)
-                        Joy.minX = Joy.rawX;
+                    Joy.AutoCalibrate(device);
 
-
-                    if (Joy.rawY > Joy.maxY)
-                        Joy.maxY = Joy.rawY;
-                    else if (Joy.rawY < Joy.minY)
-                        Joy.minY = Joy.rawY;
-
-
-                    Joy.Normalize();
-
-                    bool isJoyPressed = (((Joy.X * Joy.X) + (Joy.Y * Joy.Y)) >= (GTR_JOY_DIGITAL_THRESH * GTR_JOY_DIGITAL_THRESH));
+                    var joyDigitalThresh = Config.JoyDigitalThreshold / 100f;
+                    bool isJoyPressed = (((Joy.X * Joy.X) + (Joy.Y * Joy.Y)) >= (joyDigitalThresh * joyDigitalThresh));
                     double joyDirection = (int)((Math.Atan2(Joy.Y, Joy.X) + (Math.PI / 2)) / (Math.PI / 8));
                     int joyDirStep = (int)(Math.Abs(joyDirection));
 
@@ -363,10 +337,10 @@ namespace NintrollerLib
                     }
                 }
 
-                SnapbackFilterJoyX.Update(elapsedTicks, SnapbackFilterTicks, ref Left, ref Right);
-                SnapbackFilterJoyY.Update(elapsedTicks, SnapbackFilterTicks, ref Up, ref Down);
+                SnapbackFilterJoyX.Update(elapsedTicks, Config.SnapbackFilterTicks, ref Left, ref Right);
+                SnapbackFilterJoyY.Update(elapsedTicks, Config.SnapbackFilterTicks, ref Up, ref Down);
 
-                if ((!IsGH3) && CALIB_Enable_TouchStrip)
+                if ((!IsGH3) && Config.EnableTouchStrip)
                 {
                     if (G || R || Y || B || O)
                     {
@@ -448,13 +422,19 @@ namespace NintrollerLib
 
                 byte currentWhammyValue = (byte)(data[offset + 3] & 0x1F);
 
-                if (currentWhammyValue < CALIB_Whammy_Min)
-                    CALIB_Whammy_Min = currentWhammyValue;
+                if (currentWhammyValue < Config.WhammyCalibration_Min)
+                {
+                    Config.WhammyCalibration_Min = currentWhammyValue;
+                    device.MarkConfigModified();
+                }
 
-                if (currentWhammyValue > CALIB_Whammy_Max)
-                    CALIB_Whammy_Max = currentWhammyValue;
+                if (currentWhammyValue > Config.WhammyCalibration_Max)
+                {
+                    Config.WhammyCalibration_Max = currentWhammyValue;
+                    device.MarkConfigModified();
+                }
 
-                float whammy = (2.0f * (1.0f * (currentWhammyValue - CALIB_Whammy_Min) / (CALIB_Whammy_Max - CALIB_Whammy_Min)) - 1);
+                float whammy = (2.0f * (1.0f * (currentWhammyValue - Config.WhammyCalibration_Min) / (Config.WhammyCalibration_Max - Config.WhammyCalibration_Min)) - 1);
 
                 WhammyHigh = Math.Max(whammy, 0);
                 WhammyLow = Math.Min(whammy, 0);
@@ -479,7 +459,7 @@ namespace NintrollerLib
 #if LOW_BANDWIDTH
 
 #else
-            wiimote.Update(data);
+            wiimote.Update(device, data);
 
             // Wiimote is sideways so these are weird
             if (wiimote.buttons.Up)
@@ -518,18 +498,23 @@ namespace NintrollerLib
 
                 wiimote.accelerometer.Normalize();
 
-                CALIB_Tilt_StartingZ = 0;
+                Config.TiltCalibration_StartingZ = 0;
 
-                CALIB_Tilt_Neutral = 0;
+                Config.TiltCalibration_Neutral = 0;
+
+                device.MarkConfigModified();
             }
             
             float tiltAngle = (float)Math.Atan(Math.Sqrt(Math.Pow(wiimote.accelerometer.X,2)+ Math.Pow(wiimote.accelerometer.Y,2) / wiimote.accelerometer.Z));
 
             // Tilt calibration max
             if (SpecialButtonTiltCalibMax)
-                CALIB_Tilt_Tilted = tiltAngle;
+            {
+                Config.TiltCalibration_Tilted = tiltAngle;
+                device.MarkConfigModified();
+            }
 
-            float tilt = _MapRange((CALIB_Tilt_Weight * tiltAngle) + ((1 - CALIB_Tilt_Weight) * oldTilt), CALIB_Tilt_Neutral, CALIB_Tilt_Tilted, 0, 1);
+            float tilt = _MapRange((Config.TiltCalibration_Weight * tiltAngle) + ((1 - Config.TiltCalibration_Weight) * oldTilt), Config.TiltCalibration_Neutral, Config.TiltCalibration_Tilted, 0, 1);
             oldTilt = tiltAngle;
 
             TiltHigh = Math.Min(Math.Max(tilt, 0), 1);
@@ -537,10 +522,16 @@ namespace NintrollerLib
 
             if (!IsGH3)
             {
-                if (SpecialButtonTouchOn && !CALIB_Enable_TouchStrip)
-                    CALIB_Enable_TouchStrip = true;
-                else if (SpecialButtonTouchOff && CALIB_Enable_TouchStrip)
-                    CALIB_Enable_TouchStrip = false;
+                if (SpecialButtonTouchOn)
+                {
+                    Config.EnableTouchStrip = true;
+                    device.MarkConfigModified();
+                }
+                else if (SpecialButtonTouchOff)
+                {
+                    Config.EnableTouchStrip = false;
+                    device.MarkConfigModified();
+                }
             }
 #endif
 
@@ -749,5 +740,27 @@ namespace NintrollerLib
         {
             return GetEnumerator();
         }
+
+        public void SetConfig(ControllerConfig.IControllerConfig config)
+        {
+            if (config is ControllerConfig.GuitarConfig guitarConfig)
+            {
+                Config = guitarConfig;
+                Joy.Calibrate(Config.JoyCalibration);
+                wiimote.accelerometer.Calibrate(Config.WiimoteAccelerometerCalibration);
+                NeedsConfigLoad = false;
+            }
+
+        }
+
+        public ControllerConfig.IControllerConfig GetConfig()
+        {
+            if (NeedsConfigLoad)
+                return null;
+            Config.JoyCalibration.Calibrate(Joy);
+            Config.WiimoteAccelerometerCalibration.Calibrate(wiimote.accelerometer);
+            return Config;
+        }
+
     }
 }

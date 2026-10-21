@@ -1,17 +1,22 @@
 ﻿using System;
 using System.Collections.Generic;
+using static NintrollerLib.ControllerConfig;
 
 namespace NintrollerLib
 {
     public interface INintrollerState : IEnumerable<KeyValuePair<string, float>>
     {
-        void Update(byte[] data);
+        void Update(Nintroller device, byte[] data);
         float GetValue(string input);
         void SetCalibration(Calibrations.CalibrationPreset preset);
         void SetCalibration(INintrollerState from);
         void SetCalibration(string calibrationString);
         string GetCalibrationString();
         bool CalibrationEmpty { get; }
+
+
+        void SetConfig(IControllerConfig config);
+        IControllerConfig GetConfig();
 
 #if DEBUG
         bool DebugViewActive { get; set; }

@@ -23,7 +23,7 @@ namespace NintrollerLib
         }
 #endif
 
-        public void Update(byte[] data)
+        public void Update(Nintroller device, byte[] data)
         {
             throw new NotImplementedException();
         }
@@ -87,6 +87,16 @@ namespace NintrollerLib
         IEnumerator IEnumerable.GetEnumerator()
         {
             return GetEnumerator();
+        }
+
+        public void SetConfig(ControllerConfig.IControllerConfig config)
+        {
+
+        }
+
+        public ControllerConfig.IControllerConfig GetConfig()
+        {
+            return new ControllerConfig.EmptyConfig();
         }
     }
 }
